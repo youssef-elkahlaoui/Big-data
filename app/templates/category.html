@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Food Recommender System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1>Browse by Category</h1>
+        <p class="lead">Explore products organized by food categories</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Search Categories</h4>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('category_search') }}" method="get">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">Category</label>
+                            <input type="text" id="category" name="category" class="form-control" placeholder="E.g., cereals, chocolate, yogurt" value="{{ category|default('') }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="nutriscore" class="form-label">Minimum Nutriscore</label>
+                            <select id="nutriscore" name="nutriscore" class="form-select">
+                                <option value="">Any Nutriscore</option>
+                                <option value="a" {% if nutriscore == 'a' %}selected{% endif %}>A (Excellent)</option>
+                                <option value="b" {% if nutriscore == 'b' %}selected{% endif %}>B (Good)</option>
+                                <option value="c" {% if nutriscore == 'c' %}selected{% endif %}>C (Average)</option>
+                                <option value="d" {% if nutriscore == 'd' %}selected{% endif %}>D (Poor)</option>
+                                <option value="e" {% if nutriscore == 'e' %}selected{% endif %}>E (Bad)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if error %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-warning">
+            {{ error }}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if products %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Products in "{{ category }}" Category</h2>
+        {% if nutriscore %}
+            <p>Filtered by Nutriscore {{ nutriscore|upper }} or better</p>
+        {% endif %}
+        
+        <div class="row">
+            {% for product in products %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.product_name }}</h5>
+                        <p class="card-text">
+                            <span class="badge bg-{% if product.nutriscore_grade == 'a' %}success{% elif product.nutriscore_grade == 'b' %}success{% elif product.nutriscore_grade == 'c' %}warning{% elif product.nutriscore_grade == 'd' %}warning{% elif product.nutriscore_grade == 'e' %}danger{% else %}secondary{% endif %}">
+                                Nutriscore {{ product.nutriscore_grade|upper }}
+                            </span>
+                        </p>
+                        <p class="card-text text-truncate">{{ product.categories }}</p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a href="{{ url_for('product_detail', product_code=product.code) }}" class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% elif not categories %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            Enter a category to see products.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if categories and not category %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Popular Categories</h2>
+        <div class="row">
+            {% for category in categories %}
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-0">{{ category }}</h5>
+                    </div>
+                    <div class="card-footer bg-white text-center">
+                        <a href="{{ url_for('category_search', category=category) }}" class="btn btn-sm btn-outline-primary">Browse Products</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

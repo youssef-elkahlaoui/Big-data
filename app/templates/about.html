@@ -1,0 +1,134 @@
+{% extends "base.html" %} {% block title %}About - Food Recommender System{%
+endblock %} {% block content %}
+<div class="row mb-5">
+  <div class="col-md-12">
+    <h1>About the Food Recommender System</h1>
+    <p class="lead">
+      This project uses the Open Food Facts dataset to build an intelligent food
+      recommendation system.
+    </p>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div class="col-md-8">
+    <h2>Project Overview</h2>
+    <p>
+      The Food Recommender System is designed to help users discover food
+      products that are similar to their favorites or find healthier
+      alternatives with better nutritional profiles.
+    </p>
+
+    <p>
+      The system uses big data tools and machine learning techniques to analyze
+      a large dataset of food products and provide personalized recommendations
+      based on ingredients, nutritional information, and food categories.
+    </p>
+
+    <h3>Key Features</h3>
+    <ul>
+      <li>
+        <strong>Content-Based Recommendations</strong>: Find similar products
+        based on ingredients and product characteristics
+      </li>
+      <li>
+        <strong>Healthier Alternatives</strong>: Discover products with better
+        Nutriscore ratings but similar ingredient profiles
+      </li>
+      <li>
+        <strong>Category Search</strong>: Browse products by category with
+        filtering by nutritional quality
+      </li>
+      <li>
+        <strong>REST API</strong>: Access recommendations programmatically
+        through a REST API
+      </li>
+    </ul>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">About Open Food Facts</h4>
+      </div>
+      <div class="card-body">
+        <p>
+          This project uses data from the
+          <a href="https://world.openfoodfacts.org/" target="_blank"
+            >Open Food Facts</a
+          >
+          database, a free, open, collaborative database of food products from
+          around the world.
+        </p>
+        <p>
+          Open Food Facts is a non-profit project developed by thousands of
+          volunteers from around the world.
+        </p>
+        <p>
+          <a
+            href="https://world.openfoodfacts.org/data"
+            target="_blank"
+            class="btn btn-outline-primary"
+            >Learn more about the dataset</a
+          >
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <h2>Technical Implementation</h2>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Data Pipeline</h5>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li>
+                <strong>Data Ingestion</strong>: Downloading and processing the
+                OFF dataset
+              </li>
+              <li>
+                <strong>Preprocessing</strong>: Cleaning, normalization, and
+                handling missing values
+              </li>
+              <li>
+                <strong>Feature Engineering</strong>: TF-IDF vectorization for
+                ingredients and one-hot encoding for categories
+              </li>
+              <li>
+                <strong>Storage</strong>: Efficient storage using Parquet format
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Technologies Used</h5>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Python</strong>: Core programming language</li>
+              <li><strong>Pandas</strong>: Data manipulation and analysis</li>
+              <li>
+                <strong>Scikit-learn</strong>: Machine learning and text
+                vectorization
+              </li>
+              <li><strong>Flask</strong>: Web application framework</li>
+              <li><strong>Bootstrap</strong>: Frontend design</li>
+              <li>
+                <strong>NLTK</strong>: Natural language processing for text data
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

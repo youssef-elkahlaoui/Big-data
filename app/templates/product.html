@@ -1,0 +1,177 @@
+{% extends "base.html" %} {% block title %}{{ product.product_name }} - Food
+Recommender System{% endblock %} {% block content %}
+<div class="row mb-4">
+  <div class="col-md-12">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <a href="{{ url_for('index') }}">Home</a>
+        </li>
+        <li class="breadcrumb-item">
+          <a href="{{ url_for('search') }}">Search</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ product.product_name }}
+        </li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h1 class="h3 mb-0">{{ product.product_name }}</h1>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <h5>Product Information</h5>
+            <table class="table">
+              <tr>
+                <th style="width: 150px">Code</th>
+                <td>{{ product.code }}</td>
+              </tr>
+              <tr>
+                <th>Nutriscore</th>
+                <td>
+                  <span
+                    class="badge bg-{% if product.nutriscore_grade == 'a' %}success{% elif product.nutriscore_grade == 'b' %}success{% elif product.nutriscore_grade == 'c' %}warning{% elif product.nutriscore_grade == 'd' %}warning{% elif product.nutriscore_grade == 'e' %}danger{% else %}secondary{% endif %} p-2"
+                  >
+                    {{ product.nutriscore_grade|upper }}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <th>Categories</th>
+                <td>{{ product.categories }}</td>
+              </tr>
+              <tr>
+                <th>Ingredients</th>
+                <td>{{ product.ingredients }}</td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-4">
+            <div class="card mb-3">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Nutriscore Explained</h5>
+              </div>
+              <div class="card-body">
+                <p class="mb-1">
+                  <span class="badge bg-success">A/B</span> - High nutritional
+                  quality
+                </p>
+                <p class="mb-1">
+                  <span class="badge bg-warning">C</span> - Average nutritional
+                  quality
+                </p>
+                <p class="mb-1">
+                  <span class="badge bg-warning">D</span> - Low nutritional
+                  quality
+                </p>
+                <p class="mb-0">
+                  <span class="badge bg-danger">E</span> - Poor nutritional
+                  quality
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div class="col-md-12">
+    <h2>Similar Products</h2>
+    <p>Products with similar ingredients and characteristics:</p>
+
+    {% if similar_products %}
+    <div class="row">
+      {% for product in similar_products %}
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ product.product_name }}</h5>
+            <p class="card-text">
+              <span
+                class="badge bg-{% if product.nutriscore_grade == 'a' %}success{% elif product.nutriscore_grade == 'b' %}success{% elif product.nutriscore_grade == 'c' %}warning{% elif product.nutriscore_grade == 'd' %}warning{% elif product.nutriscore_grade == 'e' %}danger{% else %}secondary{% endif %}"
+              >
+                Nutriscore {{ product.nutriscore_grade|upper }}
+              </span>
+            </p>
+            <p class="card-text">
+              <small
+                >Similarity: {{ "%.0f"|format(product.similarity_score * 100)
+                }}%</small
+              >
+            </p>
+          </div>
+          <div class="card-footer bg-white">
+            <a
+              href="{{ url_for('product_detail', product_code=product.code) }}"
+              class="btn btn-sm btn-outline-primary"
+              >View Details</a
+            >
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">No similar products found.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <h2>Healthier Alternatives</h2>
+    <p>
+      Products with better nutritional profiles that could substitute this
+      product:
+    </p>
+
+    {% if healthier_products %}
+    <div class="row">
+      {% for product in healthier_products %}
+      <div class="col-md-4 mb-3">
+        <div
+          class="card h-100 {% if product.nutriscore_grade < product.nutriscore_grade %}border-success{% endif %}"
+        >
+          <div class="card-body">
+            <h5 class="card-title">{{ product.product_name }}</h5>
+            <p class="card-text">
+              <span
+                class="badge bg-{% if product.nutriscore_grade == 'a' %}success{% elif product.nutriscore_grade == 'b' %}success{% elif product.nutriscore_grade == 'c' %}warning{% elif product.nutriscore_grade == 'd' %}warning{% elif product.nutriscore_grade == 'e' %}danger{% else %}secondary{% endif %}"
+              >
+                Nutriscore {{ product.nutriscore_grade|upper }}
+              </span>
+            </p>
+            <p class="card-text">
+              <small
+                >Similarity: {{ "%.0f"|format(product.similarity_score * 100)
+                }}%</small
+              >
+            </p>
+          </div>
+          <div class="card-footer bg-white">
+            <a
+              href="{{ url_for('product_detail', product_code=product.code) }}"
+              class="btn btn-sm btn-outline-primary"
+              >View Details</a
+            >
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">No healthier alternatives found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block title %}Search - Food Recommender System{%
+endblock %} {% block content %}
+<div class="row mb-4">
+  <div class="col-md-12">
+    <h1>Product Search</h1>
+    <form action="{{ url_for('search') }}" method="get" class="mb-4">
+      <div class="input-group">
+        <input
+          type="text"
+          name="query"
+          class="form-control"
+          placeholder="Enter product name"
+          value="{{ query|default('') }}"
+        />
+        <button class="btn btn-primary" type="submit">Search</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if error %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="alert alert-warning">{{ error }}</div>
+  </div>
+</div>
+{% endif %} {% if products %}
+<div class="row">
+  <div class="col-md-12">
+    <h2>Search Results for "{{ query }}"</h2>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Product Name</th>
+            <th>Nutriscore</th>
+            <th>Categories</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td>{{ product.product_name }}</td>
+            <td>
+              <span
+                class="badge bg-{% if product.nutriscore_grade == 'a' %}success{% elif product.nutriscore_grade == 'b' %}success{% elif product.nutriscore_grade == 'c' %}warning{% elif product.nutriscore_grade == 'd' %}warning{% elif product.nutriscore_grade == 'e' %}danger{% else %}secondary{% endif %}"
+              >
+                {{ product.nutriscore_grade|upper }}
+              </span>
+            </td>
+            <td class="text-truncate" style="max-width: 250px">
+              {{ product.categories }}
+            </td>
+            <td>
+              <a
+                href="{{ url_for('product_detail', product_code=product.code) }}"
+                class="btn btn-sm btn-outline-primary"
+                >View Details</a
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% elif query %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="alert alert-info">
+      No products found matching "{{ query }}". Try another search term.
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %}

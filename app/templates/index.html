@@ -1,0 +1,117 @@
+{% extends "base.html" %} {% block title %}Home - Food Recommender System{%
+endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-12 text-center mb-5">
+    <h1 class="display-4">Food Recommender System</h1>
+    <p class="lead">
+      Find healthy alternatives to your favorite products using AI-powered
+      recommendations
+    </p>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div class="col-md-6 offset-md-3">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Search for Products</h4>
+      </div>
+      <div class="card-body">
+        <form action="{{ url_for('search') }}" method="post">
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              name="query"
+              class="form-control"
+              placeholder="Enter product name (e.g., Nutella, Rice, Yogurt)"
+            />
+            <button class="btn btn-primary" type="submit">Search</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-12 text-center">
+    <h2>Browse by Category</h2>
+    <p>Or explore products by their categories</p>
+    <a href="{{ url_for('category_search') }}" class="btn btn-outline-primary"
+      >View Categories</a
+    >
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <img
+          src="{{ url_for('static', filename='img/similar.svg') }}"
+          alt="Similar Products"
+          class="feature-icon mb-3"
+          onerror="this.src='https://via.placeholder.com/80'"
+        />
+        <h3>Find Similar Products</h3>
+        <p>
+          Discover products with similar ingredients and nutritional profiles.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <img
+          src="{{ url_for('static', filename='img/healthier.svg') }}"
+          alt="Healthier Alternatives"
+          class="feature-icon mb-3"
+          onerror="this.src='https://via.placeholder.com/80'"
+        />
+        <h3>Healthier Alternatives</h3>
+        <p>
+          Find healthier versions of your favorite products with better
+          nutritional values.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <img
+          src="{{ url_for('static', filename='img/categories.svg') }}"
+          alt="Category Recommendations"
+          class="feature-icon mb-3"
+          onerror="this.src='https://via.placeholder.com/80'"
+        />
+        <h3>Category-Based</h3>
+        <p>
+          Browse the best-rated products within your favorite food categories.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-12">
+    <div
+      class="alert {% if recommender_status == 'Active' %}alert-success{% else %}alert-warning{% endif %}"
+    >
+      <h5>System Status: {{ recommender_status }}</h5>
+      {% if recommender_status != 'Active' %}
+      <p>
+        The recommender system is not active. Please make sure you've downloaded
+        the dataset and run the preprocessing pipeline.
+      </p>
+      {% else %}
+      <p>
+        The recommender system is active and ready to provide recommendations.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
