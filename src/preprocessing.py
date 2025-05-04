@@ -1,50 +1,73 @@
-# Data cleaning and preprocessing functions
-import pandas as pd
-import numpy as np
+# Data cleaning and preprocessing functions with PySpark
 import os
 import pickle
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-import nltk
-from sklearn.feature_extraction.text import TfidfVectorizer
+import logging
 from typing import List, Dict, Optional, Union, Tuple
 
-# Ensure NLTK data is downloaded
-try:
-    nltk.data.find('tokenizers/punkt')
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('punkt')
-    nltk.download('stopwords')
+import numpy as np
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import functions as F
+from pyspark.sql.types import ArrayType, StringType, MapType, IntegerType
+from pyspark.ml.feature import Tokenizer, StopWordsRemover, CountVectorizer, IDF
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.linalg import SparseVector, DenseVector
+from pyspark.ml import Pipeline
 
-def load_data(data_path: str) -> pd.DataFrame:
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize Spark Session
+def get_spark_session(app_name="FoodRecommenderPreprocessing"):
     """
-    Load data from parquet file.
+    Initialize and return a Spark session.
     
     Args:
+        app_name: Name of the Spark application.
+        
+    Returns:
+        SparkSession object.
+    """
+    return (SparkSession.builder
+            .appName(app_name)
+            .config("spark.driver.memory", "4g")  # Adjust based on your system
+            .config("spark.executor.memory", "4g")  # Adjust based on your system
+            .config("spark.sql.shuffle.partitions", "8")  # Adjust based on your data size
+            .config("spark.sql.execution.arrow.pyspark.enabled", "true")  # Enable Arrow optimization
+            .getOrCreate())
+
+def load_data(spark, data_path: str) -> DataFrame:
+    """
+    Load data from parquet file using PySpark.
+    
+    Args:
+        spark: SparkSession object.
         data_path: Path to the parquet file.
         
     Returns:
-        Loaded dataframe.
+        Loaded DataFrame.
     """
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Data file not found at {data_path}")
     
-    df = pd.read_parquet(data_path)
-    print(f"Data loaded successfully from {data_path}")
-    print(f"Shape: {df.shape}")
+    df = spark.read.parquet(data_path)
+    logger.info(f"Data loaded successfully from {data_path}")
+    logger.info(f"Number of rows: {df.count()}, Number of columns: {len(df.columns)}")
     return df
 
-def select_relevant_columns(df: pd.DataFrame, columns: List[str] = None) -> pd.DataFrame:
+def select_relevant_columns(df: DataFrame, columns: List[str] = None) -> DataFrame:
     """
-    Select relevant columns from the dataframe.
+    Select relevant columns from the DataFrame.
     
     Args:
-        df: Input dataframe.
+        df: Input DataFrame.
         columns: List of columns to select. If None, uses default set.
         
     Returns:
-        Dataframe with selected columns.
+        DataFrame with selected columns.
     """
     if columns is None:
         columns = [
@@ -55,276 +78,245 @@ def select_relevant_columns(df: pd.DataFrame, columns: List[str] = None) -> pd.D
     
     # Check which relevant columns are actually present in the DataFrame
     existing_columns = [col for col in columns if col in df.columns]
-    print(f"Selecting columns: {existing_columns}")
+    logger.info(f"Selecting columns: {existing_columns}")
     
-    return df[existing_columns].copy()
+    return df.select(existing_columns)
 
-def clean_data(df: pd.DataFrame, essential_cols: List[str] = None) -> pd.DataFrame:
+def clean_data(df: DataFrame, essential_cols: List[str] = None) -> DataFrame:
     """
     Applies cleaning steps to the DataFrame.
     - Handles missing values
     - Drops rows with missing essential data
     
     Args:
-        df: Input dataframe.
+        df: Input DataFrame.
         essential_cols: List of columns that must not be null.
         
     Returns:
-        Cleaned dataframe.
+        Cleaned DataFrame.
     """
-    print("Applying data cleaning...")
-    
-    # Check missing values percentage
-    missing_percentage = df.isnull().sum() * 100 / len(df)
-    print("Missing value percentage per column:")
-    print(missing_percentage)
+    logger.info("Applying data cleaning...")
     
     # Define essential columns if not provided
     if essential_cols is None:
         essential_cols = ['product_name', 'ingredients_text_en']
     
-    # Drop rows with missing essential info (e.g., product_name, ingredients)
-    df_cleaned = df.dropna(subset=[col for col in essential_cols if col in df.columns]).copy()
+    # Get the count of null values in each column
+    null_counts = []
+    for column in df.columns:
+        null_count = df.filter(F.col(column).isNull()).count()
+        null_counts.append((column, null_count, (null_count / df.count()) * 100))
     
-    print(f"Shape after dropping rows with missing essential info: {df_cleaned.shape}")
+    # Print the null value percentages
+    logger.info("Missing value percentage per column:")
+    for col, count, percentage in null_counts:
+        logger.info(f"{col}: {count} nulls ({percentage:.2f}%)")
     
-    # Fill missing nutriscore_grade with a placeholder like 'unknown' or drop them
-    if 'nutriscore_grade' in df_cleaned.columns:
-        df_cleaned['nutriscore_grade'] = df_cleaned['nutriscore_grade'].fillna('unknown')
-        print("Filled missing 'nutriscore_grade' with 'unknown'.")
+    # Drop rows with missing essential columns
+    for col in essential_cols:
+        if col in df.columns:
+            df = df.filter(F.col(col).isNotNull())
     
-    return df_cleaned
+    logger.info(f"Shape after dropping rows with missing essential info: {df.count()} rows")
+    
+    # Fill missing nutriscore_grade with 'unknown'
+    if 'nutriscore_grade' in df.columns:
+        df = df.fillna({'nutriscore_grade': 'unknown'})
+        logger.info("Filled missing 'nutriscore_grade' with 'unknown'.")
+    
+    return df
 
-def normalize_text(df: pd.DataFrame, columns: List[str] = None) -> pd.DataFrame:
+def normalize_text(df: DataFrame, columns: List[str] = None) -> DataFrame:
     """
     Normalizes text columns (e.g., lowercase).
     
     Args:
-        df: Input dataframe.
+        df: Input DataFrame.
         columns: Text columns to normalize.
         
     Returns:
-        Dataframe with normalized text.
+        DataFrame with normalized text.
     """
-    print(f"Normalizing text columns...")
+    logger.info(f"Normalizing text columns...")
     
     if columns is None:
         columns = ['product_name', 'categories_en', 'ingredients_text_en']
     
     for col in columns:
         if col in df.columns:
-            # Ensure the column is string type before applying .str methods
-            df[col] = df[col].astype(str).str.lower()
-            print(f"Column '{col}' converted to lowercase.")
+            df = df.withColumn(col, F.lower(F.col(col)))
+            logger.info(f"Column '{col}' converted to lowercase.")
     
     return df
 
-def tokenize_ingredients(df: pd.DataFrame, text_col: str = 'ingredients_text_en') -> pd.DataFrame:
+def tokenize_ingredients(df: DataFrame, text_col: str = 'ingredients_text_en') -> DataFrame:
     """
-    Tokenizes ingredients text and removes stopwords.
+    Tokenizes ingredients text and removes stopwords using PySpark ML.
     
     Args:
-        df: Input dataframe.
+        df: Input DataFrame.
         text_col: Column containing ingredients text.
         
     Returns:
-        Dataframe with tokenized ingredients added.
+        DataFrame with tokenized ingredients added.
     """
-    print(f"Tokenizing features in column: {text_col}...")
+    logger.info(f"Tokenizing features in column: {text_col}...")
     
     if text_col not in df.columns:
-        print(f"Warning: Column '{text_col}' not found in dataframe.")
+        logger.warning(f"Warning: Column '{text_col}' not found in DataFrame.")
         return df
     
-    # Initialize stopwords
-    stop_words = set(stopwords.words('english'))
+    # Replace null values with empty string
+    df = df.fillna({text_col: ""})
     
-    # Function to tokenize and remove stopwords
-    def tokenize_and_clean(text):
-        if pd.isna(text) or text == 'nan':
-            return []
-        # Tokenize
-        tokens = word_tokenize(text.lower())
-        # Remove stopwords and non-alphabetic tokens
-        tokens = [word for word in tokens if word.isalpha() and word not in stop_words]
-        return tokens
+    # Create a tokenizer
+    tokenizer = Tokenizer(inputCol=text_col, outputCol="words")
     
-    # Apply tokenization and stopword removal
-    df['ingredients_tokens'] = df[text_col].apply(tokenize_and_clean)
-    print("Tokenized ingredients and removed stopwords.")
+    # Create a StopWordsRemover
+    remover = StopWordsRemover(inputCol="words", outputCol="ingredients_tokens")
     
-    # Create document strings for vectorization
-    df['ingredients_doc'] = df['ingredients_tokens'].apply(lambda tokens: ' '.join(tokens))
+    # Build the pipeline
+    pipeline = Pipeline(stages=[tokenizer, remover])
     
-    return df
+    # Fit and transform the data
+    df_transformed = pipeline.fit(df).transform(df)
+    
+    # Create document string by joining tokens
+    df_transformed = df_transformed.withColumn(
+        'ingredients_doc', 
+        F.concat_ws(" ", F.col("ingredients_tokens"))
+    )
+    
+    logger.info("Tokenized ingredients and removed stopwords.")
+    
+    return df_transformed
 
-def process_categories(df: pd.DataFrame, categories_col: str = 'categories_en') -> pd.DataFrame:
+def process_categories(df: DataFrame, categories_col: str = 'categories_en') -> DataFrame:
     """
     Process categories column - split comma-separated values.
     
     Args:
-        df: Input dataframe.
+        df: Input DataFrame.
         categories_col: Column containing categories.
         
     Returns:
-        Dataframe with processed categories.
+        DataFrame with processed categories.
     """
-    print(f"Processing categories in column: {categories_col}...")
+    logger.info(f"Processing categories in column: {categories_col}...")
     
     if categories_col not in df.columns:
-        print(f"Warning: Column '{categories_col}' not found in dataframe.")
+        logger.warning(f"Warning: Column '{categories_col}' not found in DataFrame.")
         return df
     
-    # Function to split categories and clean them
-    def clean_categories(cats_string):
-        if pd.isna(cats_string) or cats_string == 'nan':
-            return []
-        # Split by commas and clean each category
-        categories = [cat.strip() for cat in cats_string.split(',')]
-        # Remove empty categories
-        categories = [cat for cat in categories if cat]
-        return categories
+    # Split categories string into array, trim whitespace, and filter empty values
+    df = df.withColumn(
+        'categories_list',
+        F.expr(f"filter(transform(split({categories_col}, ','), x -> trim(x)), x -> length(x) > 0)")
+    )
     
-    df['categories_list'] = df[categories_col].apply(clean_categories)
-    print("Split categories into lists.")
+    logger.info("Split categories into lists.")
     
     return df
 
-def create_tfidf_vectors(df: pd.DataFrame, text_col: str = 'ingredients_doc', 
-                        max_features: int = 5000, min_df: int = 5) -> Tuple[pd.DataFrame, TfidfVectorizer, np.ndarray]:
+def create_tfidf_vectors(df: DataFrame, text_col: str = 'ingredients_doc', 
+                         max_features: int = 5000, min_df: int = 5) -> Tuple[DataFrame, CountVectorizer, IDF]:
     """
-    Create TF-IDF vectors for text data.
+    Create TF-IDF vectors for text data using PySpark ML.
     
     Args:
-        df: Input dataframe.
+        df: Input DataFrame.
         text_col: Column containing text to vectorize.
         max_features: Maximum number of features for TF-IDF.
         min_df: Minimum document frequency for terms.
         
     Returns:
-        Tuple of (dataframe, tfidf_vectorizer, tfidf_matrix)
+        Tuple of (DataFrame, CountVectorizer, IDF)
     """
-    print(f"Creating TF-IDF vectors for column: {text_col}...")
+    logger.info(f"Creating TF-IDF vectors for column: {text_col}...")
     
     if text_col not in df.columns:
-        print(f"Warning: Column '{text_col}' not found in dataframe.")
+        logger.warning(f"Warning: Column '{text_col}' not found in DataFrame.")
         return df, None, None
     
-    # Create TF-IDF vectors
-    tfidf_vectorizer = TfidfVectorizer(max_features=max_features, min_df=min_df)
-    tfidf_matrix = tfidf_vectorizer.fit_transform(df[text_col])
+    # Replace null values with empty string
+    df = df.fillna({text_col: ""})
     
-    print(f"Created TF-IDF matrix with shape: {tfidf_matrix.shape}")
-    print(f"Vocabulary size: {len(tfidf_vectorizer.vocabulary_)}")
+    # Create a tokenizer for the document column
+    tokenizer = Tokenizer(inputCol=text_col, outputCol=f"{text_col}_words")
     
-    return df, tfidf_vectorizer, tfidf_matrix
+    # Create a CountVectorizer
+    cv = CountVectorizer(inputCol=f"{text_col}_words", outputCol="tf", 
+                         vocabSize=max_features, minDF=min_df)
+    
+    # Create an IDF model
+    idf = IDF(inputCol="tf", outputCol="tfidf_features")
+    
+    # Build and apply the pipeline
+    pipeline = Pipeline(stages=[tokenizer, cv, idf])
+    model = pipeline.fit(df)
+    df_vectorized = model.transform(df)
+    
+    # Get the vocabulary size
+    vocabulary_size = len(model.stages[1].vocabulary)
+    logger.info(f"Created TF-IDF matrix with vocabulary size: {vocabulary_size}")
+    
+    return df_vectorized, model.stages[1], model.stages[2]
 
-def create_category_encoding(df: pd.DataFrame, categories_col: str = 'categories_list',
-                           max_categories: int = 1000) -> pd.DataFrame:
+def save_processed_data(df: DataFrame, output_path: str, vectorizer=None, model_path: str = None) -> None:
     """
-    Create one-hot encoding for categories.
+    Save processed DataFrame and models.
     
     Args:
-        df: Input dataframe.
-        categories_col: Column containing category lists.
-        max_categories: Maximum number of unique categories to use for one-hot encoding.
-        
-    Returns:
-        Dataframe with category encoding added.
+        df: Processed DataFrame.
+        output_path: Path for output parquet file.
+        vectorizer: CountVectorizer model (optional).
+        model_path: Path to save the model (optional).
     """
-    print(f"Creating encoding for categories in column: {categories_col}...")
-    
-    if categories_col not in df.columns:
-        print(f"Warning: Column '{categories_col}' not found in dataframe.")
-        return df
-    
-    # Get all unique categories
-    all_categories = set()
-    for cat_list in df[categories_col]:
-        if isinstance(cat_list, list):
-            all_categories.update(cat_list)
-    
-    print(f"Total unique categories found: {len(all_categories)}")
-    
-    # Function to create one-hot encoding for categories
-    def one_hot_categories(categories, all_cats):
-        encoding = {cat: 1 if cat in categories else 0 for cat in all_cats}
-        return encoding
-    
-    # Apply one-hot encoding (only if the number of categories is manageable)
-    if len(all_categories) < max_categories:
-        df['categories_onehot'] = df[categories_col].apply(
-            lambda cats: one_hot_categories(cats, all_categories))
-        print("Created one-hot encoding for categories.")
-    else:
-        print(f"Too many unique categories ({len(all_categories)}) for one-hot encoding. " +
-              f"Consider using embeddings or dimensionality reduction.")
-    
-    return df
-
-def save_processed_data(df: pd.DataFrame, output_path: str, 
-                      tfidf_vectorizer: TfidfVectorizer = None,
-                      similarity_matrix: np.ndarray = None,
-                      max_matrix_size: int = 1000) -> None:
-    """
-    Save processed dataframe and models.
-    
-    Args:
-        df: Processed dataframe.
-        output_path: Base path for output files.
-        tfidf_vectorizer: Fitted TF-IDF vectorizer.
-        similarity_matrix: Pre-computed similarity matrix.
-        max_matrix_size: Maximum number of rows for saving full similarity matrix.
-    """
-    print("Saving processed data and models...")
+    logger.info("Saving processed data and models...")
     
     # Create output directory if it doesn't exist
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # Save the cleaned dataframe
-    df.to_parquet(output_path)
-    print(f"Saved cleaned data to: {output_path}")
+    # Save the cleaned DataFrame
+    df.write.mode("overwrite").parquet(output_path)
+    logger.info(f"Saved cleaned data to: {output_path}")
     
-    # Save the TF-IDF vectorizer
-    if tfidf_vectorizer is not None:
-        vectorizer_path = os.path.join(os.path.dirname(output_path), "tfidf_vectorizer.pkl")
-        with open(vectorizer_path, 'wb') as f:
-            pickle.dump(tfidf_vectorizer, f)
-        print(f"Saved TF-IDF vectorizer to: {vectorizer_path}")
+    # Save the model if provided
+    if vectorizer is not None and model_path is not None:
+        model_output_path = os.path.join(model_path, "cv_model")
+        vectorizer.save(model_output_path)
+        logger.info(f"Saved CountVectorizer model to: {model_output_path}")
     
-    # Save similarity matrix if provided and not too large
-    if similarity_matrix is not None and len(df) <= max_matrix_size:
-        matrix_path = os.path.join(os.path.dirname(output_path), "cosine_sim_matrix.pkl")
-        with open(matrix_path, 'wb') as f:
-            pickle.dump(similarity_matrix, f)
-        print(f"Saved similarity matrix to: {matrix_path}")
-    elif similarity_matrix is not None:
-        print(f"Similarity matrix too large ({len(df)} > {max_matrix_size}). Not saving.")
-    
-    print("Saving complete!")
+    logger.info("Saving complete!")
 
-def preprocess_pipeline(data_path: str, output_path: str = None) -> pd.DataFrame:
+def preprocess_pipeline(spark, data_path: str, output_path: str = None, model_path: str = None) -> DataFrame:
     """
-    Run the full preprocessing pipeline.
+    Run the full preprocessing pipeline using PySpark.
     
     Args:
+        spark: SparkSession object.
         data_path: Path to the input data file.
         output_path: Path to save the processed data (optional).
+        model_path: Path to save the model (optional).
         
     Returns:
-        Processed dataframe.
+        Processed DataFrame.
     """
-    print("Starting preprocessing pipeline...")
+    logger.info("Starting preprocessing pipeline with PySpark...")
     
     # Set default output path if not provided
     if output_path is None:
         output_dir = os.path.dirname(data_path)
         output_path = os.path.join(output_dir, "cleaned_food_data.parquet")
     
+    # Set default model path if not provided
+    if model_path is None:
+        model_path = os.path.dirname(data_path)
+    
     # 1. Load data
-    df = load_data(data_path)
+    df = load_data(spark, data_path)
     
     # 2. Select relevant columns
     df = select_relevant_columns(df)
@@ -342,33 +334,43 @@ def preprocess_pipeline(data_path: str, output_path: str = None) -> pd.DataFrame
     df = process_categories(df)
     
     # 7. Create TF-IDF vectors
-    df, tfidf_vectorizer, tfidf_matrix = create_tfidf_vectors(df)
+    df, cv_model, _ = create_tfidf_vectors(df)
     
-    # 8. Create category encoding
-    df = create_category_encoding(df)
+    # 8. Save processed data and model
+    save_processed_data(df, output_path, cv_model, model_path)
     
-    # 9. Save processed data and models
-    if tfidf_vectorizer is not None:
-        save_processed_data(df, output_path, tfidf_vectorizer, None)  # Don't save similarity matrix by default
-    
-    print("Preprocessing pipeline complete!")
+    logger.info("Preprocessing pipeline complete!")
     return df
 
 # Example usage
 if __name__ == "__main__":
     try:
+        # Initialize Spark session
+        spark = get_spark_session()
+        
         # Default paths
         data_path = "../data/food.parquet"
         output_path = "../data/cleaned_food_data.parquet"
+        model_path = "../data"
         
         # Run preprocessing pipeline
-        processed_df = preprocess_pipeline(data_path, output_path)
+        processed_df = preprocess_pipeline(spark, data_path, output_path, model_path)
         
-        print(f"Processed dataset shape: {processed_df.shape}")
-        print("Sample processed data:")
-        print(processed_df[['product_name', 'ingredients_tokens', 'categories_list']].head())
+        # Show sample of processed data
+        logger.info(f"Processed dataset row count: {processed_df.count()}")
+        logger.info("Sample processed data:")
+        processed_df.select('product_name', 'ingredients_tokens', 'categories_list').show(5, truncate=False)
+        
+        # Stop Spark session
+        spark.stop()
         
     except Exception as e:
-        print(f"Error during preprocessing: {e}")
+        logger.error(f"Error during preprocessing: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Make sure to stop Spark session in case of error
+        try:
+            spark.stop()
+        except:
+            pass
