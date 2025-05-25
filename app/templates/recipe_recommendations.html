@@ -1,0 +1,524 @@
+{% extends "base.html" %} {% block title %}Recipe Recommendations - Food
+Recommender System{% endblock %} {% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="page-header">
+        <h1 class="display-5 fw-bold text-primary">
+          <i class="fas fa-utensils me-3"></i>Recipe Recommendations
+        </h1>
+        <p class="lead text-muted">
+          Get product suggestions based on your ingredients and dietary
+          preferences
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <div class="row mb-5">
+    <div class="col-lg-8 offset-lg-2">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-clipboard-list me-2"></i>Tell us about your recipe
+          </h4>
+        </div>
+        <div class="card-body">
+          <form id="recipeForm" onsubmit="getRecipeRecommendations(event)">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="ingredients" class="form-label fw-bold">
+                  <i class="fas fa-carrot me-1"></i>Main Ingredients
+                </label>
+                <textarea
+                  id="ingredients"
+                  name="ingredients"
+                  class="form-control"
+                  rows="4"
+                  placeholder="Enter ingredients separated by commas (e.g., tomatoes, cheese, flour, eggs)"
+                  required
+                ></textarea>
+                <div class="form-text">Separate ingredients with commas</div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="cuisine" class="form-label fw-bold">
+                    <i class="fas fa-globe me-1"></i>Cuisine Type
+                  </label>
+                  <select id="cuisine" name="cuisine" class="form-select">
+                    <option value="">Any cuisine</option>
+                    <option value="italian">Italian</option>
+                    <option value="french">French</option>
+                    <option value="asian">Asian</option>
+                    <option value="mexican">Mexican</option>
+                    <option value="indian">Indian</option>
+                    <option value="mediterranean">Mediterranean</option>
+                    <option value="american">American</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="meal_type" class="form-label fw-bold">
+                    <i class="fas fa-clock me-1"></i>Meal Type
+                  </label>
+                  <select id="meal_type" name="meal_type" class="form-select">
+                    <option value="">Any meal</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="snack">Snack</option>
+                    <option value="dessert">Dessert</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dietary Restrictions -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">
+                <i class="fas fa-shield-alt me-1"></i>Dietary Restrictions
+              </label>
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="vegetarian"
+                      name="dietary_restrictions"
+                      value="vegetarian"
+                    />
+                    <label class="form-check-label" for="vegetarian"
+                      >Vegetarian</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="vegan"
+                      name="dietary_restrictions"
+                      value="vegan"
+                    />
+                    <label class="form-check-label" for="vegan">Vegan</label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="gluten_free"
+                      name="dietary_restrictions"
+                      value="gluten-free"
+                    />
+                    <label class="form-check-label" for="gluten_free"
+                      >Gluten-Free</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="dairy_free"
+                      name="dietary_restrictions"
+                      value="dairy-free"
+                    />
+                    <label class="form-check-label" for="dairy_free"
+                      >Dairy-Free</label
+                    >
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="nut_free"
+                      name="dietary_restrictions"
+                      value="nut-free"
+                    />
+                    <label class="form-check-label" for="nut_free"
+                      >Nut-Free</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="low_sugar"
+                      name="dietary_restrictions"
+                      value="low-sugar"
+                    />
+                    <label class="form-check-label" for="low_sugar"
+                      >Low Sugar</label
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Allergen Exclusions -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">
+                <i class="fas fa-exclamation-triangle me-1"></i>Allergen
+                Exclusions
+              </label>
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_milk"
+                      name="exclude_allergens"
+                      value="milk"
+                    />
+                    <label class="form-check-label" for="exclude_milk"
+                      >Milk</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_eggs"
+                      name="exclude_allergens"
+                      value="eggs"
+                    />
+                    <label class="form-check-label" for="exclude_eggs"
+                      >Eggs</label
+                    >
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_nuts"
+                      name="exclude_allergens"
+                      value="nuts"
+                    />
+                    <label class="form-check-label" for="exclude_nuts"
+                      >Nuts</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_soy"
+                      name="exclude_allergens"
+                      value="soy"
+                    />
+                    <label class="form-check-label" for="exclude_soy"
+                      >Soy</label
+                    >
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_wheat"
+                      name="exclude_allergens"
+                      value="wheat"
+                    />
+                    <label class="form-check-label" for="exclude_wheat"
+                      >Wheat</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_fish"
+                      name="exclude_allergens"
+                      value="fish"
+                    />
+                    <label class="form-check-label" for="exclude_fish"
+                      >Fish</label
+                    >
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_shellfish"
+                      name="exclude_allergens"
+                      value="shellfish"
+                    />
+                    <label class="form-check-label" for="exclude_shellfish"
+                      >Shellfish</label
+                    >
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="exclude_sesame"
+                      name="exclude_allergens"
+                      value="sesame"
+                    />
+                    <label class="form-check-label" for="exclude_sesame"
+                      >Sesame</label
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary btn-lg px-5">
+                <i class="fas fa-magic me-2"></i>Get Recommendations
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Animation -->
+  <div id="loadingSection" class="row mb-4" style="display: none">
+    <div class="col-12 text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">
+        Finding the best recommendations for your recipe...
+      </p>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" style="display: none">
+    <!-- Recipe Summary -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-primary">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+              <i class="fas fa-info-circle me-2"></i>Recipe Summary
+            </h4>
+          </div>
+          <div class="card-body">
+            <div id="recipeSummary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommended Products -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h3 class="fw-bold text-primary mb-3">
+          <i class="fas fa-star me-2"></i>Recommended Products
+        </h3>
+        <div id="recommendedProducts" class="row g-3"></div>
+      </div>
+    </div>
+
+    <!-- Alternative Ingredients -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h3 class="fw-bold text-success mb-3">
+          <i class="fas fa-exchange-alt me-2"></i>Alternative Ingredients
+        </h3>
+        <div id="alternativeIngredients" class="row g-3"></div>
+      </div>
+    </div>
+
+    <!-- Nutrition Tips -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-info">
+          <div class="card-header bg-info text-white">
+            <h4 class="mb-0">
+              <i class="fas fa-lightbulb me-2"></i>Nutrition Tips
+            </h4>
+          </div>
+          <div class="card-body">
+            <div id="nutritionTips"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function getRecipeRecommendations(event) {
+    event.preventDefault();
+
+    const form = document.getElementById("recipeForm");
+    const formData = new FormData(form);
+
+    // Show loading
+    document.getElementById("loadingSection").style.display = "block";
+    document.getElementById("resultsSection").style.display = "none";
+
+    try {
+      const response = await fetch("/api/recipe-recommendations", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        displayRecipeRecommendations(data);
+      } else {
+        alert("Error: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred while getting recommendations");
+    } finally {
+      document.getElementById("loadingSection").style.display = "none";
+    }
+  }
+
+  function displayRecipeRecommendations(data) {
+    // Display recipe summary
+    const summaryHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h5><i class="fas fa-list me-1"></i>Ingredients Used:</h5>
+                <p class="text-muted">${data.ingredients.join(", ")}</p>
+            </div>
+            <div class="col-md-6">
+                <h5><i class="fas fa-utensils me-1"></i>Recipe Type:</h5>
+                <p class="text-muted">${data.cuisine || "Any"} ${
+      data.meal_type || "meal"
+    }</p>
+            </div>
+        </div>
+        ${
+          data.dietary_restrictions && data.dietary_restrictions.length > 0
+            ? `
+        <div class="row mt-2">
+            <div class="col-12">
+                <h5><i class="fas fa-shield-alt me-1"></i>Dietary Restrictions:</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    ${data.dietary_restrictions
+                      .map(
+                        (restriction) =>
+                          `<span class="badge bg-success">${restriction}</span>`
+                      )
+                      .join("")}
+                </div>
+            </div>
+        </div>
+        `
+            : ""
+        }
+    `;
+    document.getElementById("recipeSummary").innerHTML = summaryHTML;
+
+    // Display recommended products
+    const productsHTML = data.recommended_products
+      .map(
+        (product) => `
+        <div class="col-md-6 col-lg-4">
+            <div class="product-card h-100">
+                <div class="product-card-body">
+                    <h6 class="product-name">${product.product_name}</h6>
+                    <p class="text-muted small mb-2">${
+                      product.brands || "Generic"
+                    }</p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="nutri-score nutri-score-${(
+                          product.nutriscore_grade || "unknown"
+                        ).toLowerCase()}">
+                            ${product.nutriscore_grade || "?"}
+                        </span>
+                        <span class="similarity-score">
+                            ${Math.round(product.similarity_score * 100)}% match
+                        </span>
+                    </div>
+                    <div class="product-tags">
+                        ${
+                          product.categories
+                            ? product.categories
+                                .split(",")
+                                .slice(0, 2)
+                                .map(
+                                  (cat) =>
+                                    `<span class="badge bg-light text-dark">${cat.trim()}</span>`
+                                )
+                                .join("")
+                            : ""
+                        }
+                    </div>
+                    <div class="mt-2">
+                        <a href="/product/${
+                          product.code
+                        }" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+    document.getElementById("recommendedProducts").innerHTML = productsHTML;
+
+    // Display alternative ingredients
+    if (data.alternative_ingredients) {
+      const alternativesHTML = data.alternative_ingredients
+        .map(
+          (alt) => `
+            <div class="col-md-6 col-lg-4">
+                <div class="alternative-card">
+                    <h6 class="fw-bold text-success">${alt.original} → ${
+            alt.alternative
+          }</h6>
+                    <p class="text-muted small mb-1">${alt.reason}</p>
+                    <div class="benefits">
+                        ${alt.benefits
+                          .map(
+                            (benefit) =>
+                              `<span class="badge bg-success bg-opacity-10 text-success">${benefit}</span>`
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            </div>
+        `
+        )
+        .join("");
+      document.getElementById("alternativeIngredients").innerHTML =
+        alternativesHTML;
+    }
+
+    // Display nutrition tips
+    if (data.nutrition_tips) {
+      const tipsHTML = `
+            <ul class="list-unstyled">
+                ${data.nutrition_tips
+                  .map(
+                    (tip) =>
+                      `<li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>${tip}</li>`
+                  )
+                  .join("")}
+            </ul>
+        `;
+      document.getElementById("nutritionTips").innerHTML = tipsHTML;
+    }
+
+    // Show results
+    document.getElementById("resultsSection").style.display = "block";
+    document
+      .getElementById("resultsSection")
+      .scrollIntoView({ behavior: "smooth" });
+  }
+</script>
+{% endblock %}

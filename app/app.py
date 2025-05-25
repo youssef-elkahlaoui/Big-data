@@ -1,8 +1,12 @@
-# Flask web application
+# Flask web application with comprehensive food recommendation features
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import os
 import sys
 import logging
+import json
+import pandas as pd
+from datetime import datetime
 
 # Add the src directory to the path to be able to import modules from there
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -18,6 +22,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for API endpoints
+
+# Common allergens list for filtering
+COMMON_ALLERGENS = [
+    'gluten', 'milk', 'eggs', 'nuts', 'peanuts', 'sesame', 'soy', 
+    'fish', 'crustaceans', 'molluscs', 'celery', 'mustard', 'lupin', 'sulphites'
+]
+
+# Countries with significant presence in Open Food Facts
+AVAILABLE_COUNTRIES = [
+    'france', 'germany', 'united-states', 'united-kingdom', 'spain', 'italy',
+    'belgium', 'netherlands', 'canada', 'switzerland', 'japan', 'australia'
+]
 
 # Initialize the recommender
 try:
@@ -125,6 +142,136 @@ def product_detail(product_code):
         return render_template('error.html', 
                                error=f"Error generating recommendations: {str(e)}")
 
+@app.route('/advanced_search', methods=['GET', 'POST'])
+def advanced_search():
+    """Advanced search with filtering options."""
+    if not app.config.get('RECOMMENDER_LOADED', False):
+        return render_template('advanced_search.html', 
+                               error="Recommender system not loaded. Please run the preprocessing pipeline first.",
+                               allergens=COMMON_ALLERGENS,
+                               countries=AVAILABLE_COUNTRIES)
+    
+    if request.method == 'GET':
+        return render_template('advanced_search.html', 
+                               allergens=COMMON_ALLERGENS,
+                               countries=AVAILABLE_COUNTRIES)
+    
+    # Process search filters
+    filters = {
+        'query': request.form.get('query', '').strip(),
+        'country': request.form.get('country', ''),
+        'nutriscore': request.form.getlist('nutriscore'),
+        'exclude_allergens': request.form.getlist('allergens'),
+        'min_ecoscore': request.form.get('min_ecoscore', ''),
+        'packaging_preference': request.form.get('packaging', ''),
+        'category': request.form.get('category', ''),
+        'max_results': int(request.form.get('max_results', 20))
+    }
+    
+    try:
+        products = recommender.advanced_search(filters)
+        
+        if not products:
+            return render_template('advanced_search.html', 
+                                   filters=filters,
+                                   allergens=COMMON_ALLERGENS,
+                                   countries=AVAILABLE_COUNTRIES,
+                                   error="No products found matching your criteria")
+        
+        return render_template('advanced_search.html', 
+                               filters=filters,
+                               products=products,
+                               allergens=COMMON_ALLERGENS,
+                               countries=AVAILABLE_COUNTRIES)
+    except Exception as e:
+        logger.error(f"Error in advanced search: {e}")
+        return render_template('advanced_search.html', 
+                               filters=filters,
+                               allergens=COMMON_ALLERGENS,
+                               countries=AVAILABLE_COUNTRIES,
+                               error=f"Error processing your search: {str(e)}")
+
+@app.route('/recipe_recommendations', methods=['GET', 'POST'])
+def recipe_recommendations():
+    """Recipe-based recommendations."""
+    if not app.config.get('RECOMMENDER_LOADED', False):
+        return render_template('recipe_recommendations.html', 
+                               error="Recommender system not loaded. Please run the preprocessing pipeline first.")
+    
+    if request.method == 'GET':
+        return render_template('recipe_recommendations.html')
+    
+    # Get recipe ingredients
+    ingredients = request.form.get('ingredients', '').strip()
+    dietary_restrictions = request.form.getlist('dietary_restrictions')
+    max_results = int(request.form.get('max_results', 15))
+    
+    if not ingredients:
+        return render_template('recipe_recommendations.html', 
+                               error="Please enter at least one ingredient")
+    
+    try:
+        recommendations = recommender.recommend_by_ingredients(
+            ingredients, 
+            dietary_restrictions=dietary_restrictions,
+            num_recommendations=max_results
+        )
+        
+        if not recommendations:
+            return render_template('recipe_recommendations.html', 
+                                   ingredients=ingredients,
+                                   error="No products found matching your ingredients")
+        
+        return render_template('recipe_recommendations.html', 
+                               ingredients=ingredients,
+                               dietary_restrictions=dietary_restrictions,
+                               recommendations=recommendations)
+    except Exception as e:
+        logger.error(f"Error in recipe recommendations: {e}")
+        return render_template('recipe_recommendations.html', 
+                               ingredients=ingredients,
+                               error=f"Error generating recommendations: {str(e)}")
+
+@app.route('/nutrition_comparison')
+def nutrition_comparison():
+    """Compare nutrition facts between products."""
+    if not app.config.get('RECOMMENDER_LOADED', False):
+        return render_template('nutrition_comparison.html', 
+                               error="Recommender system not loaded.")
+    
+    product_codes = request.args.getlist('products')
+    
+    if len(product_codes) < 2:
+        return render_template('nutrition_comparison.html', 
+                               error="Please select at least 2 products to compare")
+    
+    try:
+        comparison_data = recommender.compare_nutrition(product_codes)
+        
+        return render_template('nutrition_comparison.html', 
+                               comparison_data=comparison_data,
+                               product_codes=product_codes)
+    except Exception as e:
+        logger.error(f"Error in nutrition comparison: {e}")
+        return render_template('nutrition_comparison.html', 
+                               error=f"Error comparing products: {str(e)}")
+
+@app.route('/sustainability_insights')
+def sustainability_insights():
+    """Sustainability and eco-score insights."""
+    if not app.config.get('RECOMMENDER_LOADED', False):
+        return render_template('sustainability.html', 
+                               error="Recommender system not loaded.")
+    
+    try:
+        insights = recommender.get_sustainability_insights()
+        
+        return render_template('sustainability.html', insights=insights)
+    except Exception as e:
+        logger.error(f"Error getting sustainability insights: {e}")
+        return render_template('sustainability.html', 
+                               error=f"Error loading sustainability data: {str(e)}")
+
 @app.route('/category')
 def category_search():
     """Search for products by category."""
@@ -223,15 +370,45 @@ def about():
     """About page with information about the project."""
     return render_template('about.html')
 
+# Health check endpoint for Docker
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring and load balancers."""
+    try:
+        # Basic health checks
+        health_status = {
+            'status': 'healthy',
+            'timestamp': datetime.now().isoformat(),
+            'version': '1.0.0',
+            'services': {
+                'recommender': 'available',
+                'data': 'loaded' if recommender and hasattr(recommender, 'data') and recommender.data is not None else 'not_loaded'
+            }
+        }
+        return jsonify(health_status), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            'status': 'unhealthy',
+            'timestamp': datetime.now().isoformat(),
+            'error': str(e)
+        }), 503
+
+# Error handlers
 @app.errorhandler(404)
-def page_not_found(e):
-    """Custom 404 page."""
-    return render_template('error.html', error="Page not found"), 404
+def not_found_error(error):
+    """Handle 404 errors."""
+    return render_template('error.html', 
+                         error_code=404, 
+                         error_message="Page not found"), 404
 
 @app.errorhandler(500)
-def server_error(e):
-    """Custom 500 page."""
-    return render_template('error.html', error="Server error. Please try again later."), 500
+def internal_error(error):
+    """Handle 500 errors."""
+    logger.error(f"Internal server error: {str(error)}")
+    return render_template('error.html', 
+                         error_code=500, 
+                         error_message="Internal server error"), 500
 
 def shutdown_spark():
     """Shutdown the Spark session when the Flask app exits."""
@@ -272,3 +449,15 @@ if __name__ == '__main__':
     if not os.path.exists(js_dir):
         os.makedirs(js_dir)
         logger.info(f"Created JS directory: {js_dir}")
+    
+    # Initialize recommender system
+    try:
+        logger.info("Initializing Food Recommender System...")
+        recommender = FoodRecommender()
+        logger.info("Food Recommender System initialized successfully!")
+    except Exception as e:
+        logger.error(f"Failed to initialize recommender: {str(e)}")
+        recommender = None
+    
+    # Run the application
+    app.run(host='0.0.0.0', port=5000, debug=False)

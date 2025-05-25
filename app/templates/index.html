@@ -1,54 +1,212 @@
-{% extends "base.html" %} {% block title %}Home - Food Recommender System{%
-endblock %} {% block content %}
-<div class="row">
-  <div class="col-md-12 text-center mb-5">
-    <h1 class="display-4">Food Recommender System</h1>
-    <p class="lead">
-      Find healthy alternatives to your favorite products using AI-powered
-      recommendations
-    </p>
-  </div>
-</div>
+{% extends "base.html" %}
 
-<div class="row mb-5">
-  <div class="col-md-6 offset-md-3">
-    <div class="card">
-      <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Search for Products</h4>
-      </div>
-      <div class="card-body">
-        <form action="{{ url_for('search') }}" method="post">
-          <div class="input-group mb-3">
-            <input
-              type="text"
-              name="query"
-              class="form-control"
-              placeholder="Enter product name (e.g., Nutella, Rice, Yogurt)"
-            />
-            <button class="btn btn-primary" type="submit">Search</button>
-          </div>
-        </form>
-      </div>
+{% block title %}Home - Food Recommender System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center py-5 mb-5">
+    <div class="container">
+        <h1 class="display-3 fw-bold text-primary mb-4">
+            <i class="fas fa-utensils me-3"></i>Food Recommender System
+        </h1>
+        <p class="lead fs-4 text-muted mb-4">
+            Discover healthier alternatives and make informed food choices with AI-powered recommendations
+        </p>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="search-hero-card">
+                    <form action="{{ url_for('search') }}" method="post" class="d-flex">
+                        <input type="text" name="query" class="form-control form-control-lg me-2" 
+                               placeholder="Search for any food product..." required>
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-<div class="row mb-4">
-  <div class="col-md-12 text-center">
-    <h2>Browse by Category</h2>
-    <p>Or explore products by their categories</p>
-    <a href="{{ url_for('category_search') }}" class="btn btn-outline-primary"
-      >View Categories</a
-    >
-  </div>
+<!-- Quick Actions -->
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-search-plus fa-2x text-primary"></i>
+                </div>
+                <h5 class="fw-bold">Advanced Search</h5>
+                <p class="text-muted mb-3">Filter by country, allergens, Nutri-Score, and more</p>
+                <a href="{{ url_for('advanced_search') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-sliders-h me-1"></i>Try Now
+                </a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-cookie-bite fa-2x text-success"></i>
+                </div>
+                <h5 class="fw-bold">Recipe Recommendations</h5>
+                <p class="text-muted mb-3">Get product suggestions based on your ingredients</p>
+                <a href="{{ url_for('recipe_recommendations') }}" class="btn btn-outline-success">
+                    <i class="fas fa-utensils me-1"></i>Get Ideas
+                </a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-balance-scale fa-2x text-warning"></i>
+                </div>
+                <h5 class="fw-bold">Nutrition Compare</h5>
+                <p class="text-muted mb-3">Compare nutritional values of different products</p>
+                <a href="{{ url_for('nutrition_comparison') }}" class="btn btn-outline-warning">
+                    <i class="fas fa-chart-bar me-1"></i>Compare
+                </a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="feature-card text-center h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-leaf fa-2x text-info"></i>
+                </div>
+                <h5 class="fw-bold">Sustainability</h5>
+                <p class="text-muted mb-3">Explore eco-friendly and sustainable food options</p>
+                <a href="{{ url_for('sustainability') }}" class="btn btn-outline-info">
+                    <i class="fas fa-globe me-1"></i>Explore
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="row">
-  <div class="col-md-4">
-    <div class="card mb-4">
-      <div class="card-body text-center">
-        <img
-          src="{{ url_for('static', filename='img/similar.svg') }}"
+<!-- Statistics Section -->
+<div class="stats-section py-5 mb-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-primary">2M+</h3>
+                    <p class="text-muted">Products in Database</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-success">150+</h3>
+                    <p class="text-muted">Countries Covered</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-warning">50+</h3>
+                    <p class="text-muted">Nutrition Metrics</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="display-6 fw-bold text-info">24/7</h3>
+                    <p class="text-muted">Always Available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-12 text-center mb-5">
+            <h2 class="display-5 fw-bold text-primary">How It Works</h2>
+            <p class="lead text-muted">Simple steps to discover better food choices</p>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="step-card text-center">
+                <div class="step-number">1</div>
+                <h5 class="fw-bold mt-3">Search or Scan</h5>
+                <p class="text-muted">Enter a product name or use our advanced search filters</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="step-card text-center">
+                <div class="step-number">2</div>
+                <h5 class="fw-bold mt-3">Analyze</h5>
+                <p class="text-muted">Our AI analyzes nutrition, ingredients, and sustainability</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="step-card text-center">
+                <div class="step-number">3</div>
+                <h5 class="fw-bold mt-3">Discover</h5>
+                <p class="text-muted">Get personalized recommendations for healthier alternatives</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popular Categories -->
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-6 fw-bold text-primary">Popular Categories</h2>
+            <p class="text-muted">Explore products by category</p>
+        </div>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{{ url_for('search') }}?category=dairy" class="category-link">
+                <div class="category-card text-center">
+                    <i class="fas fa-cheese fa-2x text-warning mb-2"></i>
+                    <p class="fw-bold mb-0">Dairy</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{{ url_for('search') }}?category=beverages" class="category-link">
+                <div class="category-card text-center">
+                    <i class="fas fa-coffee fa-2x text-primary mb-2"></i>
+                    <p class="fw-bold mb-0">Beverages</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{{ url_for('search') }}?category=snacks" class="category-link">
+                <div class="category-card text-center">
+                    <i class="fas fa-cookie-bite fa-2x text-success mb-2"></i>
+                    <p class="fw-bold mb-0">Snacks</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{{ url_for('search') }}?category=cereals" class="category-link">
+                <div class="category-card text-center">
+                    <i class="fas fa-seedling fa-2x text-info mb-2"></i>
+                    <p class="fw-bold mb-0">Cereals</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{{ url_for('search') }}?category=meat" class="category-link">
+                <div class="category-card text-center">
+                    <i class="fas fa-drumstick-bite fa-2x text-danger mb-2"></i>
+                    <p class="fw-bold mb-0">Meat</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+            <a href="{{ url_for('search') }}?category=fruits" class="category-link">
+                <div class="category-card text-center">
+                    <i class="fas fa-apple-alt fa-2x text-warning mb-2"></i>
+                    <p class="fw-bold mb-0">Fruits</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
           alt="Similar Products"
           class="feature-icon mb-3"
           onerror="this.src='https://via.placeholder.com/80'"

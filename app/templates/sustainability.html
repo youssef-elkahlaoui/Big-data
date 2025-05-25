@@ -1,0 +1,742 @@
+{% extends "base.html" %} {% block title %}Sustainability Insights - Food
+Recommender System{% endblock %} {% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="page-header">
+        <h1 class="display-5 fw-bold text-primary">
+          <i class="fas fa-leaf me-3"></i>Sustainability Insights
+        </h1>
+        <p class="lead text-muted">
+          Discover eco-friendly food choices and understand environmental impact
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Controls -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-filter me-2"></i>Sustainability Filters
+          </h4>
+        </div>
+        <div class="card-body">
+          <form
+            id="sustainabilityFilters"
+            onsubmit="loadSustainabilityData(event)"
+          >
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label for="ecoScoreFilter" class="form-label fw-bold">
+                  <i class="fas fa-star me-1"></i>Eco-Score Minimum
+                </label>
+                <select
+                  id="ecoScoreFilter"
+                  name="eco_score_min"
+                  class="form-select"
+                >
+                  <option value="">Any score</option>
+                  <option value="A">A - Excellent</option>
+                  <option value="B">B - Good</option>
+                  <option value="C">C - Fair</option>
+                  <option value="D">D - Poor</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label for="packagingFilter" class="form-label fw-bold">
+                  <i class="fas fa-recycle me-1"></i>Packaging Type
+                </label>
+                <select
+                  id="packagingFilter"
+                  name="packaging_preference"
+                  class="form-select"
+                >
+                  <option value="">Any packaging</option>
+                  <option value="recyclable">Recyclable</option>
+                  <option value="biodegradable">Biodegradable</option>
+                  <option value="minimal">Minimal packaging</option>
+                  <option value="reusable">Reusable containers</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label for="countryFilter" class="form-label fw-bold">
+                  <i class="fas fa-globe me-1"></i>Origin Country
+                </label>
+                <select
+                  id="countryFilter"
+                  name="origin_country"
+                  class="form-select"
+                >
+                  <option value="">Any country</option>
+                  <option value="local">Local products</option>
+                  <option value="europe">European Union</option>
+                  <option value="organic">Organic certified</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label for="categoryFilter" class="form-label fw-bold">
+                  <i class="fas fa-tags me-1"></i>Product Category
+                </label>
+                <select id="categoryFilter" name="category" class="form-select">
+                  <option value="">All categories</option>
+                  <option value="dairy">Dairy products</option>
+                  <option value="meat">Meat & fish</option>
+                  <option value="fruits">Fruits & vegetables</option>
+                  <option value="cereals">Cereals & grains</option>
+                  <option value="beverages">Beverages</option>
+                  <option value="snacks">Snacks</option>
+                </select>
+              </div>
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-success btn-lg px-5">
+                <i class="fas fa-search me-2"></i>Explore Sustainable Options
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Animation -->
+  <div id="loadingSection" class="row mb-4" style="display: none">
+    <div class="col-12 text-center">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2 text-muted">Analyzing sustainability data...</p>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" style="display: none">
+    <!-- Sustainability Overview -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h3 class="fw-bold text-success mb-3">
+          <i class="fas fa-chart-line me-2"></i>Sustainability Overview
+        </h3>
+        <div id="overviewCards" class="row g-3"></div>
+      </div>
+    </div>
+
+    <!-- Top Sustainable Products -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-trophy me-2"></i>Most Sustainable Products
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="topSustainableProducts" class="row g-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Environmental Impact Analysis -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-chart-pie me-2"></i>Eco-Score Distribution
+            </h5>
+          </div>
+          <div class="card-body">
+            <canvas id="ecoScoreChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="fas fa-box me-2"></i>Packaging Analysis
+            </h5>
+          </div>
+          <div class="card-body">
+            <canvas id="packagingChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Country Sustainability Metrics -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-globe-americas me-2"></i>Country Sustainability
+              Metrics
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <canvas id="countryChart"></canvas>
+              </div>
+              <div class="col-md-4">
+                <div id="countryInsights"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sustainability Tips -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card border-success h-100">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-lightbulb me-2"></i>Eco-Friendly Tips
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="sustainabilityTips"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-info h-100">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-recycle me-2"></i>Packaging Alternatives
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="packagingAlternatives"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carbon Footprint Tracker -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-warning">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="fas fa-cloud me-2"></i>Carbon Footprint Comparison
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <canvas id="carbonFootprintChart"></canvas>
+              </div>
+              <div class="col-md-4">
+                <div id="carbonInsights">
+                  <h6 class="fw-bold text-warning">Environmental Impact</h6>
+                  <div id="carbonMetrics"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sustainable Alternatives -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-primary">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-exchange-alt me-2"></i>Sustainable Alternatives
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="sustainableAlternatives"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Educational Content -->
+  <div class="row mt-5">
+    <div class="col-12">
+      <div class="card bg-light">
+        <div class="card-header">
+          <h4 class="mb-0 text-primary">
+            <i class="fas fa-graduation-cap me-2"></i>Learn About Food
+            Sustainability
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="education-card">
+                <h6 class="fw-bold text-success">
+                  <i class="fas fa-leaf me-1"></i>Eco-Scores Explained
+                </h6>
+                <p class="text-muted small">
+                  Eco-Scores rate environmental impact from A (best) to E
+                  (worst), considering carbon footprint, packaging, and
+                  production methods.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="education-card">
+                <h6 class="fw-bold text-info">
+                  <i class="fas fa-recycle me-1"></i>Sustainable Packaging
+                </h6>
+                <p class="text-muted small">
+                  Look for recyclable, biodegradable, or minimal packaging.
+                  Reusable containers are the most eco-friendly option.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <div class="education-card">
+                <h6 class="fw-bold text-warning">
+                  <i class="fas fa-map-marker-alt me-1"></i>Local vs Global
+                </h6>
+                <p class="text-muted small">
+                  Local products typically have lower carbon footprints due to
+                  reduced transportation distances and fresher ingredients.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Auto-load sustainability data on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    loadSustainabilityData();
+  });
+
+  async function loadSustainabilityData(event = null) {
+    if (event) event.preventDefault();
+
+    const form = document.getElementById("sustainabilityFilters");
+    const formData = new FormData(form);
+
+    // Show loading
+    document.getElementById("loadingSection").style.display = "block";
+    document.getElementById("resultsSection").style.display = "none";
+
+    try {
+      const response = await fetch("/api/sustainability-insights", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        displaySustainabilityResults(data);
+      } else {
+        alert("Error: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred while loading sustainability data");
+    } finally {
+      document.getElementById("loadingSection").style.display = "none";
+    }
+  }
+
+  function displaySustainabilityResults(data) {
+    // Display overview cards
+    displayOverviewCards(data.overview);
+
+    // Display top sustainable products
+    displayTopSustainableProducts(data.top_products);
+
+    // Display charts
+    displayEcoScoreChart(data.charts.eco_score_distribution);
+    displayPackagingChart(data.charts.packaging_analysis);
+    displayCountryChart(data.charts.country_metrics);
+    displayCarbonFootprintChart(data.charts.carbon_footprint);
+
+    // Display insights and tips
+    displaySustainabilityTips(data.sustainability_tips);
+    displayPackagingAlternatives(data.packaging_alternatives);
+    displayCountryInsights(data.country_insights);
+    displayCarbonInsights(data.carbon_insights);
+    displaySustainableAlternatives(data.sustainable_alternatives);
+
+    // Show results
+    document.getElementById("resultsSection").style.display = "block";
+    document
+      .getElementById("resultsSection")
+      .scrollIntoView({ behavior: "smooth" });
+  }
+
+  function displayOverviewCards(overview) {
+    const cardsHTML = [
+      {
+        title: "Average Eco-Score",
+        value: overview.avg_eco_score,
+        icon: "leaf",
+        color: "success",
+      },
+      {
+        title: "Sustainable Products",
+        value: `${overview.sustainable_percentage}%`,
+        icon: "check-circle",
+        color: "info",
+      },
+      {
+        title: "Local Products",
+        value: overview.local_products_count,
+        icon: "map-marker-alt",
+        color: "warning",
+      },
+      {
+        title: "Recyclable Packaging",
+        value: `${overview.recyclable_percentage}%`,
+        icon: "recycle",
+        color: "primary",
+      },
+    ]
+      .map(
+        (card) => `
+        <div class="col-md-3">
+            <div class="overview-card text-center">
+                <div class="overview-icon text-${card.color}">
+                    <i class="fas fa-${card.icon} fa-2x"></i>
+                </div>
+                <h4 class="fw-bold text-${card.color}">${card.value}</h4>
+                <p class="text-muted mb-0">${card.title}</p>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("overviewCards").innerHTML = cardsHTML;
+  }
+
+  function displayTopSustainableProducts(products) {
+    const productsHTML = products
+      .map(
+        (product) => `
+        <div class="col-md-6 col-lg-4">
+            <div class="sustainable-product-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="product-name">${product.product_name}</h6>
+                        <span class="eco-score eco-score-${product.ecoscore_grade.toLowerCase()}">
+                            ${product.ecoscore_grade}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-2">${
+                      product.brands || "Generic"
+                    }</p>
+                    
+                    <div class="sustainability-metrics mb-3">
+                        <div class="metric-row">
+                            <span class="metric-label">Carbon Impact:</span>
+                            <span class="metric-value text-success">${
+                              product.carbon_impact
+                            }</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Packaging:</span>
+                            <span class="metric-value">${
+                              product.packaging_type
+                            }</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Origin:</span>
+                            <span class="metric-value">${
+                              product.origin_country
+                            }</span>
+                        </div>
+                    </div>
+                    
+                    <div class="sustainability-badges mb-2">
+                        ${product.certifications
+                          .map(
+                            (cert) =>
+                              `<span class="badge bg-success bg-opacity-10 text-success">${cert}</span>`
+                          )
+                          .join("")}
+                    </div>
+                    
+                    <a href="/product/${
+                      product.code
+                    }" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("topSustainableProducts").innerHTML = productsHTML;
+  }
+
+  function displayEcoScoreChart(data) {
+    const ctx = document.getElementById("ecoScoreChart").getContext("2d");
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            data: data.values,
+            backgroundColor: [
+              "#28a745",
+              "#20c997",
+              "#ffc107",
+              "#fd7e14",
+              "#dc3545",
+            ],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    });
+  }
+
+  function displayPackagingChart(data) {
+    const ctx = document.getElementById("packagingChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label: "Products Count",
+            data: data.values,
+            backgroundColor: "#ffc107",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  function displayCountryChart(data) {
+    const ctx = document.getElementById("countryChart").getContext("2d");
+    new Chart(ctx, {
+      type: "horizontalBar",
+      data: {
+        labels: data.countries,
+        datasets: [
+          {
+            label: "Sustainability Score",
+            data: data.scores,
+            backgroundColor: "#007bff",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            beginAtZero: true,
+            max: 100,
+          },
+        },
+      },
+    });
+  }
+
+  function displayCarbonFootprintChart(data) {
+    const ctx = document
+      .getElementById("carbonFootprintChart")
+      .getContext("2d");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.categories,
+        datasets: [
+          {
+            label: "CO2 Emissions (kg)",
+            data: data.emissions,
+            borderColor: "#dc3545",
+            backgroundColor: "rgba(220, 53, 69, 0.1)",
+            tension: 0.4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  function displaySustainabilityTips(tips) {
+    const tipsHTML = tips
+      .map(
+        (tip) => `
+        <div class="tip-item mb-3">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-${tip.icon} text-success me-2 mt-1"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">${tip.title}</h6>
+                    <p class="text-muted small mb-0">${tip.description}</p>
+                </div>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("sustainabilityTips").innerHTML = tipsHTML;
+  }
+
+  function displayPackagingAlternatives(alternatives) {
+    const alternativesHTML = alternatives
+      .map(
+        (alt) => `
+        <div class="alternative-item mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong class="text-danger">${alt.avoid}</strong>
+                    <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                    <strong class="text-success">${alt.use_instead}</strong>
+                </div>
+                <span class="badge bg-info">${alt.impact_reduction}</span>
+            </div>
+            <p class="text-muted small mb-0 mt-1">${alt.reason}</p>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("packagingAlternatives").innerHTML =
+      alternativesHTML;
+  }
+
+  function displayCountryInsights(insights) {
+    const insightsHTML = insights
+      .map(
+        (insight) => `
+        <div class="insight-item mb-2">
+            <div class="d-flex align-items-center">
+                <span class="flag-emoji me-2">${insight.flag}</span>
+                <div>
+                    <strong>${insight.country}</strong>
+                    <div class="small text-muted">${insight.insight}</div>
+                </div>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("countryInsights").innerHTML = insightsHTML;
+  }
+
+  function displayCarbonInsights(insights) {
+    const metricsHTML = insights
+      .map(
+        (metric) => `
+        <div class="carbon-metric mb-2">
+            <div class="d-flex justify-content-between">
+                <span class="small">${metric.category}:</span>
+                <span class="fw-bold ${
+                  metric.trend === "up" ? "text-danger" : "text-success"
+                }">
+                    ${metric.value} ${metric.unit}
+                    <i class="fas fa-arrow-${
+                      metric.trend === "up" ? "up" : "down"
+                    } ms-1"></i>
+                </span>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("carbonMetrics").innerHTML = metricsHTML;
+  }
+
+  function displaySustainableAlternatives(alternatives) {
+    const alternativesHTML = alternatives
+      .map(
+        (alt) => `
+        <div class="row mb-3">
+            <div class="col-md-5">
+                <div class="product-comparison original">
+                    <h6 class="fw-bold text-muted">${alt.original.name}</h6>
+                    <div class="metrics">
+                        <span class="eco-score eco-score-${alt.original.eco_score.toLowerCase()}">${
+          alt.original.eco_score
+        }</span>
+                        <span class="small text-muted ms-2">${
+                          alt.original.carbon_footprint
+                        } CO2</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 text-center">
+                <i class="fas fa-arrow-right text-success fa-lg mt-3"></i>
+            </div>
+            <div class="col-md-5">
+                <div class="product-comparison alternative">
+                    <h6 class="fw-bold text-success">${
+                      alt.alternative.name
+                    }</h6>
+                    <div class="metrics">
+                        <span class="eco-score eco-score-${alt.alternative.eco_score.toLowerCase()}">${
+          alt.alternative.eco_score
+        }</span>
+                        <span class="small text-success ms-2">${
+                          alt.alternative.carbon_footprint
+                        } CO2</span>
+                    </div>
+                    <div class="benefits mt-2">
+                        ${alt.benefits
+                          .map(
+                            (benefit) =>
+                              `<span class="badge bg-success bg-opacity-10 text-success">${benefit}</span>`
+                          )
+                          .join("")}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("sustainableAlternatives").innerHTML =
+      alternativesHTML;
+  }
+</script>
+{% endblock %}

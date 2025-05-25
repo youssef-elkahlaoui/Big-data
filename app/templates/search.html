@@ -1,24 +1,432 @@
-{% extends "base.html" %} {% block title %}Search - Food Recommender System{%
-endblock %} {% block content %}
-<div class="row mb-4">
-  <div class="col-md-12">
-    <h1>Product Search</h1>
-    <form action="{{ url_for('search') }}" method="get" class="mb-4">
-      <div class="input-group">
-        <input
-          type="text"
-          name="query"
-          class="form-control"
-          placeholder="Enter product name"
-          value="{{ query|default('') }}"
-        />
-        <button class="btn btn-primary" type="submit">Search</button>
+{% extends "base.html" %} {% block title %}Search Results - Food Recommender
+System{% endblock %} {% block content %}
+<div class="container-fluid">
+  <!-- Search Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="search-header">
+        <h1 class="display-6 fw-bold text-primary">
+          <i class="fas fa-search me-2"></i>Product Search
+        </h1>
+        {% if query %}
+        <p class="lead text-muted">
+          Results for: <strong>"{{ query }}"</strong>
+        </p>
+        {% endif %}
       </div>
-    </form>
+    </div>
+  </div>
+
+  <!-- Enhanced Search Form -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form
+            action="{{ url_for('search') }}"
+            method="get"
+            class="search-form"
+          >
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    name="query"
+                    class="form-control"
+                    placeholder="Search for any food product..."
+                    value="{{ query|default('') }}"
+                    required
+                  />
+                  <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-search me-1"></i>Search
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <a
+                  href="{{ url_for('advanced_search') }}"
+                  class="btn btn-outline-secondary btn-lg w-100"
+                >
+                  <i class="fas fa-sliders-h me-1"></i>Advanced Search
+                </a>
+              </div>
+            </div>
+
+            <!-- Quick Filters -->
+            {% if query %}
+            <div class="row">
+              <div class="col-12">
+                <div class="quick-filters">
+                  <span class="filter-label">Quick filters:</span>
+                  <a
+                    href="{{ url_for('search', query=query, nutriscore='A,B') }}"
+                    class="btn btn-sm btn-outline-success {% if 'A,B' in request.args.get('nutriscore', '') %}active{% endif %}"
+                  >
+                    Good Nutri-Score
+                  </a>
+                  <a
+                    href="{{ url_for('search', query=query, category='organic') }}"
+                    class="btn btn-sm btn-outline-info {% if 'organic' in request.args.get('category', '') %}active{% endif %}"
+                  >
+                    Organic
+                  </a>
+                  <a
+                    href="{{ url_for('search', query=query, exclude_allergens='gluten') }}"
+                    class="btn btn-sm btn-outline-warning {% if 'gluten' in request.args.get('exclude_allergens', '') %}active{% endif %}"
+                  >
+                    Gluten-Free
+                  </a>
+                  <a
+                    href="{{ url_for('search', query=query, sort_by='nutrition_score') }}"
+                    class="btn btn-sm btn-outline-primary {% if 'nutrition_score' in request.args.get('sort_by', '') %}active{% endif %}"
+                  >
+                    Best Nutrition
+                  </a>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="row">
+    <div class="col-12">
+      <div class="alert alert-danger d-flex align-items-center">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <div>{{ error }}</div>
+      </div>
+    </div>
+  </div>
+  {% endif %} {% if products %}
+  <!-- Search Results -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div
+        class="search-results-header d-flex justify-content-between align-items-center"
+      >
+        <h3 class="fw-bold text-secondary">
+          <i class="fas fa-list me-2"></i>Search Results
+          <span class="badge bg-primary">{{ products|length }} found</span>
+        </h3>
+        <div class="sort-options">
+          <div class="dropdown">
+            <button
+              class="btn btn-outline-secondary dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i class="fas fa-sort me-1"></i>Sort by
+            </button>
+            <ul class="dropdown-menu">
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('search', query=query, sort_by='relevance') }}"
+                >
+                  <i class="fas fa-star me-1"></i>Relevance
+                </a>
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('search', query=query, sort_by='nutriscore') }}"
+                >
+                  <i class="fas fa-award me-1"></i>Nutri-Score
+                </a>
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('search', query=query, sort_by='name') }}"
+                >
+                  <i class="fas fa-sort-alpha-down me-1"></i>Name
+                </a>
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('search', query=query, sort_by='brand') }}"
+                >
+                  <i class="fas fa-tag me-1"></i>Brand
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    {% for product in products %}
+    <div class="col-md-6 col-lg-4 col-xl-3">
+      <div class="product-card h-100">
+        <div class="product-card-header">
+          {% if product.image_url %}
+          <img
+            src="{{ product.image_url }}"
+            alt="{{ product.product_name }}"
+            class="product-image"
+          />
+          {% else %}
+          <div class="product-image-placeholder">
+            <i class="fas fa-image fa-2x text-muted"></i>
+          </div>
+          {% endif %}
+
+          <div class="product-badges">
+            {% if product.nutriscore_grade %}
+            <span
+              class="nutri-score nutri-score-{{ product.nutriscore_grade.lower() }}"
+            >
+              {{ product.nutriscore_grade }}
+            </span>
+            {% endif %} {% if product.ecoscore_grade %}
+            <span
+              class="eco-score eco-score-{{ product.ecoscore_grade.lower() }}"
+            >
+              {{ product.ecoscore_grade }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="product-card-body">
+          <h6 class="product-name">{{ product.product_name }}</h6>
+
+          {% if product.brands %}
+          <p class="product-brand text-muted">{{ product.brands }}</p>
+          {% endif %}
+
+          <div class="product-info">
+            {% if product.categories %}
+            <div class="product-categories mb-2">
+              {% for category in product.categories.split(',')[:2] %}
+              <span class="badge bg-light text-dark"
+                >{{ category.strip() }}</span
+              >
+              {% endfor %}
+            </div>
+            {% endif %} {% if product.nutrition_score_fr %}
+            <div class="nutrition-summary">
+              <span class="nutrition-score">
+                <i class="fas fa-heartbeat me-1"></i>
+                Nutrition: {{ product.nutrition_score_fr }}/100
+              </span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="product-actions mt-auto">
+            <a
+              href="{{ url_for('product_detail', code=product.code) }}"
+              class="btn btn-primary btn-sm"
+            >
+              <i class="fas fa-eye me-1"></i>View Details
+            </a>
+            <button
+              class="btn btn-outline-secondary btn-sm"
+              onclick="addToComparison('{{ product.code }}', '{{ product.product_name }}')"
+            >
+              <i class="fas fa-balance-scale me-1"></i>Compare
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- No Results -->
+  {% elif query and not error %}
+  <div class="row">
+    <div class="col-12">
+      <div class="no-results text-center py-5">
+        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+        <h3 class="text-muted">No products found</h3>
+        <p class="text-muted">
+          No products match your search for "<strong>{{ query }}</strong>". Try
+          using different keywords or check your spelling.
+        </p>
+        <div class="suggestions mt-4">
+          <h5>Suggestions:</h5>
+          <ul class="list-unstyled">
+            <li>
+              <i class="fas fa-lightbulb me-1 text-warning"></i>Try broader
+              search terms
+            </li>
+            <li>
+              <i class="fas fa-lightbulb me-1 text-warning"></i>Check spelling
+              and try alternative names
+            </li>
+            <li>
+              <i class="fas fa-lightbulb me-1 text-warning"></i>Use the
+              <a href="{{ url_for('advanced_search') }}">advanced search</a>
+              with filters
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Popular Searches -->
+  {% if not query %}
+  <div class="row">
+    <div class="col-12">
+      <div class="popular-searches">
+        <h4 class="fw-bold text-primary mb-3">
+          <i class="fas fa-fire me-2"></i>Popular Searches
+        </h4>
+        <div class="popular-search-tags">
+          <a
+            href="{{ url_for('search', query='chocolate') }}"
+            class="search-tag"
+            >Chocolate</a
+          >
+          <a href="{{ url_for('search', query='yogurt') }}" class="search-tag"
+            >Yogurt</a
+          >
+          <a href="{{ url_for('search', query='bread') }}" class="search-tag"
+            >Bread</a
+          >
+          <a href="{{ url_for('search', query='cereal') }}" class="search-tag"
+            >Cereal</a
+          >
+          <a href="{{ url_for('search', query='cheese') }}" class="search-tag"
+            >Cheese</a
+          >
+          <a href="{{ url_for('search', query='juice') }}" class="search-tag"
+            >Juice</a
+          >
+          <a href="{{ url_for('search', query='cookies') }}" class="search-tag"
+            >Cookies</a
+          >
+          <a href="{{ url_for('search', query='pasta') }}" class="search-tag"
+            >Pasta</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Comparison Modal -->
+<div
+  class="modal fade"
+  id="comparisonModal"
+  tabindex="-1"
+  aria-labelledby="comparisonModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="comparisonModalLabel">
+          <i class="fas fa-balance-scale me-2"></i>Product Comparison
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div id="comparisonList"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          onclick="compareSelectedProducts()"
+        >
+          <i class="fas fa-chart-bar me-1"></i>Compare Now
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
-{% if error %}
+<script>
+  let comparisonProducts = [];
+
+  function addToComparison(code, name) {
+    if (comparisonProducts.find((p) => p.code === code)) {
+      alert("Product already added to comparison");
+      return;
+    }
+
+    if (comparisonProducts.length >= 4) {
+      alert("You can compare up to 4 products at once");
+      return;
+    }
+
+    comparisonProducts.push({ code, name });
+    updateComparisonModal();
+
+    // Show modal if not visible
+    const modal = new bootstrap.Modal(
+      document.getElementById("comparisonModal")
+    );
+    modal.show();
+  }
+
+  function removeFromComparison(code) {
+    comparisonProducts = comparisonProducts.filter((p) => p.code !== code);
+    updateComparisonModal();
+  }
+
+  function updateComparisonModal() {
+    const listElement = document.getElementById("comparisonList");
+
+    if (comparisonProducts.length === 0) {
+      listElement.innerHTML =
+        '<p class="text-muted">No products selected for comparison</p>';
+      return;
+    }
+
+    const listHTML = comparisonProducts
+      .map(
+        (product) => `
+        <div class="comparison-item d-flex justify-content-between align-items-center mb-2">
+            <span>${product.name}</span>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeFromComparison('${product.code}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `
+      )
+      .join("");
+
+    listElement.innerHTML = listHTML;
+  }
+
+  function compareSelectedProducts() {
+    if (comparisonProducts.length < 2) {
+      alert("Please select at least 2 products to compare");
+      return;
+    }
+
+    const codes = comparisonProducts.map((p) => p.code).join(",");
+    window.location.href = `/nutrition-comparison?products=${codes}`;
+  }
+</script>
+{% endblock %}
 <div class="row">
   <div class="col-md-12">
     <div class="alert alert-warning">{{ error }}</div>

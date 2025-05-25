@@ -1,11 +1,14 @@
 # Recommendation engine logic using PySpark
 import os
 import numpy as np
+import pandas as pd
 from typing import List, Dict, Tuple, Optional, Union
+import re
+from collections import Counter
 
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
-from pyspark.ml.feature import CountVectorizerModel
+from pyspark.ml.feature import CountVectorizer, IDF, HashingTF
 from pyspark.ml.linalg import SparseVector, DenseVector, Vectors
 from pyspark.sql.types import StringType, ArrayType, MapType, IntegerType, FloatType, StructType, StructField, BooleanType
 
@@ -44,20 +47,11 @@ class FoodRecommender:
         # self.pdf = df.toPandas()
         
         return df
-    
-    def _load_model(self):
-        """Load the CountVectorizer model if available."""
-        model_path = os.path.join(os.path.dirname(self.data_path), "cv_model")
-        
-        if os.path.exists(model_path):
-            try:
-                cv_model = CountVectorizerModel.load(model_path)
-                print("CountVectorizer model loaded successfully.")
-                return cv_model
-            except Exception as e:
-                print(f"Error loading CountVectorizer model: {e}")
-        
-        print("No CountVectorizer model found. Will use existing features.")
+      def _load_model(self):
+        """Initialize vectorization components if needed."""
+        # For now, we'll compute similarity on the fly using existing features
+        # In a production system, you might want to pre-compute and cache feature vectors
+        print("Using on-demand feature computation for similarity.")
         return None
     
     def compute_similarity(self, product_idx: int, num_recommendations: int = 5) -> DataFrame:
@@ -118,54 +112,115 @@ class FoodRecommender:
         
         return similar_products
     
-    def get_product_by_code(self, code: str) -> Optional[Dict]:
+    def advanced_search(self, filters: Dict) -> List[Dict]:
         """
-        Get product details by code.
+        Advanced search with multiple filtering options.
         
         Args:
-            code: Product code.
-            
+            filters: Dictionary containing search filters
+                - query: text search
+                - country: country filter
+                - nutriscore: nutriscore grades list
+                - exclude_allergens: allergens to exclude
+                - min_ecoscore: minimum ecoscore grade
+                - packaging_preference: packaging type preference
+                - category: category filter
+                - max_results: maximum number of results
+        
         Returns:
-            Product details as a dictionary or None if not found.
+            List of matching products
         """
-        product = self.df.filter(F.col("code") == code).first()
-        
-        if product is None:
-            return None
-        
-        # Convert to dictionary
-        return {
-            'code': product.get('code', 'N/A'),
-            'product_name': product.get('product_name', 'N/A'),
-            'nutriscore_grade': product.get('nutriscore_grade', 'unknown'),
-            'categories': product.get('categories_en', '')
-        }
-    
-    def search_products(self, query: str, limit: int = 10) -> List[Dict]:
-        """
-        Search for products by name.
-        
-        Args:
-            query: Search query.
-            limit: Maximum number of results.
+        try:
+            result_df = self.df
             
-        Returns:
-            List of matching products.
-        """
-        # Search by product name (case-insensitive)
-        matches = self.df.filter(F.lower(F.col("product_name")).contains(query.lower()))
-        
-        # Convert to list of dictionaries
-        results = []
-        for product in matches.limit(limit).collect():
-            results.append({
-                'code': product.get('code', 'N/A'),
-                'product_name': product.get('product_name', 'N/A'),
-                'nutriscore_grade': product.get('nutriscore_grade', 'unknown'),
-                'categories': product.get('categories_en', '')
-            })
-        
-        return results
+            # Text search
+            if filters.get('query'):
+                query = filters['query'].lower()
+                result_df = result_df.filter(
+                    F.lower(F.col('product_name')).contains(query) |
+                    F.lower(F.col('categories')).contains(query) |
+                    F.lower(F.col('ingredients_text')).contains(query)
+                )
+            
+            # Country filter
+            if filters.get('country'):
+                country = filters['country']
+                result_df = result_df.filter(
+                    F.lower(F.col('countries')).contains(country.lower())
+                )
+            
+            # Nutriscore filter
+            if filters.get('nutriscore'):
+                nutriscore_list = filters['nutriscore']
+                result_df = result_df.filter(F.col('nutriscore_grade').isin(nutriscore_list))
+            
+            # Allergen exclusion
+            if filters.get('exclude_allergens'):
+                for allergen in filters['exclude_allergens']:
+                    result_df = result_df.filter(
+                        ~F.lower(F.col('allergens')).contains(allergen.lower()) |
+                        F.col('allergens').isNull()
+                    )
+            
+            # Ecoscore filter
+            if filters.get('min_ecoscore'):
+                min_ecoscore = filters['min_ecoscore']
+                # Convert letter grades to numbers for comparison
+                ecoscore_map = {'a': 5, 'b': 4, 'c': 3, 'd': 2, 'e': 1}
+                min_score = ecoscore_map.get(min_ecoscore.lower(), 0)
+                
+                result_df = result_df.withColumn(
+                    'ecoscore_numeric',
+                    F.when(F.lower(F.col('ecoscore_grade')) == 'a', 5)
+                    .when(F.lower(F.col('ecoscore_grade')) == 'b', 4)
+                    .when(F.lower(F.col('ecoscore_grade')) == 'c', 3)
+                    .when(F.lower(F.col('ecoscore_grade')) == 'd', 2)
+                    .when(F.lower(F.col('ecoscore_grade')) == 'e', 1)
+                    .otherwise(0)
+                ).filter(F.col('ecoscore_numeric') >= min_score)
+            
+            # Packaging preference
+            if filters.get('packaging_preference'):
+                packaging = filters['packaging_preference']
+                result_df = result_df.filter(
+                    F.lower(F.col('packaging')).contains(packaging.lower())
+                )
+            
+            # Category filter
+            if filters.get('category'):
+                category = filters['category']
+                result_df = result_df.filter(
+                    F.lower(F.col('categories')).contains(category.lower())
+                )
+            
+            # Limit results
+            max_results = filters.get('max_results', 20)
+            result_df = result_df.limit(max_results)
+            
+            # Convert to list of dictionaries
+            products = []
+            for row in result_df.collect():
+                product = {
+                    'code': row.get('code', 'N/A'),
+                    'product_name': row.get('product_name', 'N/A'),
+                    'nutriscore_grade': row.get('nutriscore_grade', 'unknown'),
+                    'ecoscore_grade': row.get('ecoscore_grade', 'unknown'),
+                    'categories': row.get('categories', ''),
+                    'countries': row.get('countries', ''),
+                    'allergens': row.get('allergens', ''),
+                    'packaging': row.get('packaging', ''),
+                    'energy_100g': row.get('energy_100g', 0),
+                    'fat_100g': row.get('fat_100g', 0),
+                    'sugars_100g': row.get('sugars_100g', 0),
+                    'salt_100g': row.get('salt_100g', 0)
+                }
+                products.append(product)
+            
+            return products
+            
+        except Exception as e:
+            print(f"Error in advanced search: {e}")
+            return []
     
     def recommend_similar_products(self, 
                                   code: str, 
@@ -385,57 +440,357 @@ class FoodRecommender:
         if hasattr(self, 'spark') and self.spark is not None:
             self.spark.stop()
             print("Spark session stopped.")
-
-
-# Example usage
-if __name__ == "__main__":
-    try:
-        # Initialize the recommender
-        recommender = FoodRecommender()
+    
+    def compare_nutrition(self, product_codes: List[str]) -> Dict:
+        """
+        Compare nutrition facts between multiple products.
         
-        # Example: Search for products
-        search_query = "Nutella"
-        search_results = recommender.search_products(search_query)
+        Args:
+            product_codes: List of product codes to compare
         
-        print(f"\nSearch results for '{search_query}':")
-        for i, product in enumerate(search_results[:3]):  # Show top 3
-            print(f"{i+1}. {product['product_name']} (Code: {product['code']}, Nutriscore: {product['nutriscore_grade']})")
-        
-        # Get a product code for recommendations
-        if search_results:
-            product_code = search_results[0]['code']
-            
-            # Example: Get similar products
-            similar_products = recommender.recommend_similar_products(product_code, num_recommendations=3)
-            
-            print(f"\nProducts similar to '{search_results[0]['product_name']}':")
-            for i, product in enumerate(similar_products):
-                print(f"{i+1}. {product['product_name']} (Similarity: {product['similarity_score']:.2f}, Nutriscore: {product['nutriscore_grade']})")
-            
-            # Example: Get healthier alternatives
-            healthier_products = recommender.recommend_healthier_alternatives(product_code, num_recommendations=3)
-            
-            print(f"\nHealthier alternatives to '{search_results[0]['product_name']}':")
-            for i, product in enumerate(healthier_products):
-                print(f"{i+1}. {product['product_name']} (Similarity: {product['similarity_score']:.2f}, Nutriscore: {product['nutriscore_grade']})")
-        
-        # Example: Get products by category with good nutriscore
-        category_products = recommender.recommend_by_category("breakfast cereal", nutriscore="b", num_recommendations=3)
-        
-        print(f"\nRecommended breakfast cereals (nutriscore b or better):")
-        for i, product in enumerate(category_products):
-            print(f"{i+1}. {product['product_name']} (Nutriscore: {product['nutriscore_grade']})")
-        
-        # Shutdown Spark session
-        recommender.shutdown()
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        # Make sure to stop Spark session in case of error
+        Returns:
+            Dictionary containing comparison data
+        """
         try:
-            recommender.shutdown()
-        except:
-            pass
+            # Get products by codes
+            products_df = self.df.filter(F.col('code').isin(product_codes))
+            
+            if products_df.count() == 0:
+                return {"error": "No products found"}
+            
+            # Define nutrition columns to compare
+            nutrition_cols = [
+                'energy_100g', 'fat_100g', 'saturated_fat_100g', 'carbohydrates_100g',
+                'sugars_100g', 'fiber_100g', 'proteins_100g', 'salt_100g', 'sodium_100g'
+            ]
+            
+            comparison_data = {
+                'products': [],
+                'nutrition_comparison': {},
+                'rankings': {}
+            }
+            
+            # Collect product data
+            for row in products_df.collect():
+                product_data = {
+                    'code': row.get('code', 'N/A'),
+                    'product_name': row.get('product_name', 'N/A'),
+                    'nutriscore_grade': row.get('nutriscore_grade', 'unknown'),
+                    'nutrition': {}
+                }
+                
+                for col in nutrition_cols:
+                    value = row.get(col, 0)
+                    product_data['nutrition'][col] = float(value) if value else 0.0
+                
+                comparison_data['products'].append(product_data)
+            
+            # Create comparison tables
+            for col in nutrition_cols:
+                comparison_data['nutrition_comparison'][col] = []
+                values = []
+                
+                for product in comparison_data['products']:
+                    value = product['nutrition'][col]
+                    comparison_data['nutrition_comparison'][col].append({
+                        'product_name': product['product_name'],
+                        'value': value
+                    })
+                    values.append(value)
+                
+                # Rank products for this nutrient (lower is better for most)
+                if col in ['energy_100g', 'fat_100g', 'saturated_fat_100g', 'sugars_100g', 'salt_100g']:
+                    # Lower is better
+                    sorted_products = sorted(comparison_data['nutrition_comparison'][col], key=lambda x: x['value'])
+                else:
+                    # Higher is better (for fiber, proteins)
+                    sorted_products = sorted(comparison_data['nutrition_comparison'][col], key=lambda x: x['value'], reverse=True)
+                
+                comparison_data['rankings'][col] = sorted_products
+            
+            return comparison_data
+            
+        except Exception as e:
+            print(f"Error in nutrition comparison: {e}")
+            return {"error": str(e)}
+    
+    def get_sustainability_insights(self) -> Dict:
+        """
+        Get sustainability insights from the dataset.
+        
+        Returns:
+            Dictionary containing sustainability metrics and insights
+        """
+        try:
+            insights = {
+                'ecoscore_distribution': {},
+                'packaging_analysis': {},
+                'country_sustainability': {},
+                'recommendations': []
+            }
+            
+            # Ecoscore distribution
+            ecoscore_counts = self.df.groupBy('ecoscore_grade').count().collect()
+            total_products = self.df.count()
+            
+            for row in ecoscore_counts:
+                grade = row['ecoscore_grade'] if row['ecoscore_grade'] else 'unknown'
+                count = row['count']
+                percentage = (count / total_products) * 100
+                insights['ecoscore_distribution'][grade] = {
+                    'count': count,
+                    'percentage': round(percentage, 2)
+                }
+            
+            # Packaging analysis
+            packaging_df = self.df.filter(F.col('packaging').isNotNull() & (F.col('packaging') != ''))
+            
+            # Count eco-friendly packaging keywords
+            eco_keywords = ['recycled', 'recyclable', 'cardboard', 'paper', 'glass']
+            non_eco_keywords = ['plastic', 'polystyrene', 'pvc']
+            
+            eco_friendly_count = 0
+            non_eco_count = 0
+            
+            for keyword in eco_keywords:
+                count = packaging_df.filter(F.lower(F.col('packaging')).contains(keyword)).count()
+                eco_friendly_count += count
+            
+            for keyword in non_eco_keywords:
+                count = packaging_df.filter(F.lower(F.col('packaging')).contains(keyword)).count()
+                non_eco_count += count
+            
+            insights['packaging_analysis'] = {
+                'eco_friendly_packaging': eco_friendly_count,
+                'non_eco_packaging': non_eco_count,
+                'eco_friendly_percentage': round((eco_friendly_count / packaging_df.count()) * 100, 2) if packaging_df.count() > 0 else 0
+            }
+            
+            # Country sustainability (top eco-score countries)
+            country_eco_df = self.df.filter(
+                F.col('countries').isNotNull() & 
+                F.col('ecoscore_grade').isNotNull() &
+                F.col('ecoscore_grade').isin(['a', 'b'])
+            ).groupBy('countries').count().orderBy(F.desc('count')).limit(10)
+            
+            country_sustainability = []
+            for row in country_eco_df.collect():
+                country_sustainability.append({
+                    'country': row['countries'],
+                    'high_eco_products': row['count']
+                })
+            
+            insights['country_sustainability'] = country_sustainability
+            
+            # Generate sustainability recommendations
+            insights['recommendations'] = [
+                "Choose products with A or B eco-scores for better environmental impact",
+                "Look for products with recyclable or minimal packaging",
+                "Consider locally produced items to reduce transportation emissions",
+                "Prefer products with organic or sustainable ingredient sourcing"
+            ]
+            
+            return insights
+            
+        except Exception as e:
+            print(f"Error getting sustainability insights: {e}")
+            return {"error": str(e)}
+
+    def get_product_by_code(self, product_code: str) -> Optional[Dict]:
+        """Enhanced product lookup with more details."""
+        try:
+            product_row = self.df.filter(F.col('code') == product_code).first()
+            
+            if not product_row:
+                return None
+            
+            # Convert Row to dictionary with all available fields
+            product = {}
+            for field in product_row.asDict():
+                product[field] = product_row[field]
+            
+            return product
+            
+        except Exception as e:
+            print(f"Error getting product by code: {e}")
+            return None
+
+    def search_products(self, query: str, limit: int = 10) -> List[Dict]:
+        """Enhanced product search with better ranking."""
+        try:
+            query_lower = query.lower()
+            
+            # Search in multiple fields with different weights
+            search_df = self.df.filter(
+                F.lower(F.col('product_name')).contains(query_lower) |
+                F.lower(F.col('categories')).contains(query_lower) |
+                F.lower(F.col('brands')).contains(query_lower) |
+                F.lower(F.col('ingredients_text')).contains(query_lower)
+            )
+            
+            # Add relevance scoring
+            search_df = search_df.withColumn(
+                'relevance_score',
+                F.when(F.lower(F.col('product_name')).contains(query_lower), 10).otherwise(0) +
+                F.when(F.lower(F.col('brands')).contains(query_lower), 5).otherwise(0) +
+                F.when(F.lower(F.col('categories')).contains(query_lower), 3).otherwise(0) +
+                F.when(F.lower(F.col('ingredients_text')).contains(query_lower), 1).otherwise(0)
+            ).orderBy(F.desc('relevance_score'), F.desc('nutriscore_grade')).limit(limit)
+            
+            # Convert to list
+            products = []
+            for row in search_df.collect():
+                product = {
+                    'code': row.get('code', 'N/A'),
+                    'product_name': row.get('product_name', 'N/A'),
+                    'nutriscore_grade': row.get('nutriscore_grade', 'unknown'),
+                    'categories': row.get('categories', ''),
+                    'brands': row.get('brands', ''),
+                    'relevance_score': row.get('relevance_score', 0)
+                }
+                products.append(product)
+            
+            return products
+            
+        except Exception as e:
+            print(f"Error searching products: {e}")
+            return []
+        
+    def recommend_by_ingredients(self, ingredients: List[str], dietary_restrictions: List[str] = None, exclude_allergens: List[str] = None, num_recommendations: int = 10) -> List[Dict]:
+        """
+        Recommend products based on desired ingredients and dietary restrictions.
+        
+        Args:
+            ingredients: List of desired ingredients
+            dietary_restrictions: List of dietary restrictions (e.g., 'vegan', 'vegetarian', 'gluten-free')
+            exclude_allergens: List of allergens to exclude
+            num_recommendations: Number of recommendations to return
+        
+        Returns:
+            List of recommended products matching the criteria
+        """
+        try:
+            # Start with all products
+            result_df = self.df
+            
+            # Filter by ingredients (products that contain ANY of the desired ingredients)
+            if ingredients:
+                ingredient_conditions = []
+                for ingredient in ingredients:
+                    ingredient_conditions.append(
+                        F.lower(F.col('ingredients_text')).contains(ingredient.lower())
+                    )
+                
+                # Combine conditions with OR
+                combined_condition = ingredient_conditions[0]
+                for condition in ingredient_conditions[1:]:
+                    combined_condition = combined_condition | condition
+                
+                result_df = result_df.filter(combined_condition)
+            
+            # Apply dietary restrictions
+            if dietary_restrictions:
+                for restriction in dietary_restrictions:
+                    restriction_lower = restriction.lower()
+                    
+                    if restriction_lower == 'vegan':
+                        # Exclude animal products
+                        animal_keywords = ['milk', 'eggs', 'meat', 'fish', 'chicken', 'beef', 'pork', 'dairy', 'cheese', 'butter', 'cream', 'whey', 'casein', 'gelatin', 'honey']
+                        for keyword in animal_keywords:
+                            result_df = result_df.filter(
+                                ~F.lower(F.col('ingredients_text')).contains(keyword) |
+                                F.col('ingredients_text').isNull()
+                            )
+                    
+                    elif restriction_lower == 'vegetarian':
+                        # Exclude meat and fish
+                        meat_keywords = ['meat', 'fish', 'chicken', 'beef', 'pork', 'lamb', 'turkey', 'bacon', 'ham', 'salmon', 'tuna']
+                        for keyword in meat_keywords:
+                            result_df = result_df.filter(
+                                ~F.lower(F.col('ingredients_text')).contains(keyword) |
+                                F.col('ingredients_text').isNull()
+                            )
+                    
+                    elif restriction_lower == 'gluten-free' or restriction_lower == 'gluten_free':
+                        # Exclude gluten-containing ingredients
+                        gluten_keywords = ['wheat', 'barley', 'rye', 'gluten', 'flour', 'bread', 'pasta']
+                        for keyword in gluten_keywords:
+                            result_df = result_df.filter(
+                                ~F.lower(F.col('ingredients_text')).contains(keyword) |
+                                F.col('ingredients_text').isNull()
+                            )
+                    
+                    elif restriction_lower == 'dairy-free' or restriction_lower == 'dairy_free':
+                        # Exclude dairy products
+                        dairy_keywords = ['milk', 'dairy', 'cheese', 'butter', 'cream', 'whey', 'casein', 'lactose']
+                        for keyword in dairy_keywords:
+                            result_df = result_df.filter(
+                                ~F.lower(F.col('ingredients_text')).contains(keyword) |
+                                F.col('ingredients_text').isNull()
+                            )
+            
+            # Exclude allergens
+            if exclude_allergens:
+                for allergen in exclude_allergens:
+                    result_df = result_df.filter(
+                        ~F.lower(F.col('allergens')).contains(allergen.lower()) |
+                        F.col('allergens').isNull()
+                    )
+            
+            # Calculate ingredient match score
+            if ingredients:
+                # Create UDF to calculate ingredient match score
+                def calculate_ingredient_score(ingredients_text, target_ingredients):
+                    if not ingredients_text:
+                        return 0.0
+                    
+                    ingredients_lower = ingredients_text.lower()
+                    score = 0.0
+                    
+                    for ingredient in target_ingredients:
+                        if ingredient.lower() in ingredients_lower:
+                            score += 1.0
+                    
+                    # Normalize by number of target ingredients
+                    return score / len(target_ingredients)
+                
+                # Register UDF
+                self.spark.udf.register("calculate_ingredient_score", 
+                                       lambda x: calculate_ingredient_score(x, ingredients), 
+                                       FloatType())
+                
+                # Add ingredient score column
+                result_df = result_df.withColumn(
+                    'ingredient_score',
+                    calculate_ingredient_score(F.col('ingredients_text'))
+                )
+                
+                # Order by ingredient score and nutriscore
+                result_df = result_df.orderBy(F.desc('ingredient_score'), F.asc('nutriscore_grade'))
+            else:
+                # Order by nutriscore if no specific ingredients
+                result_df = result_df.orderBy(F.asc('nutriscore_grade'))
+            
+            # Limit results
+            result_df = result_df.limit(num_recommendations)
+            
+            # Convert to list of dictionaries
+            recommendations = []
+            for row in result_df.collect():
+                product = {
+                    'code': row.get('code', 'N/A'),
+                    'product_name': row.get('product_name', 'N/A'),
+                    'nutriscore_grade': row.get('nutriscore_grade', 'unknown'),
+                    'ecoscore_grade': row.get('ecoscore_grade', 'unknown'),
+                    'categories': row.get('categories', ''),
+                    'ingredients_text': row.get('ingredients_text', ''),
+                    'allergens': row.get('allergens', ''),
+                    'ingredient_score': float(row.get('ingredient_score', 0)) if ingredients else 0.0
+                }
+                recommendations.append(product)
+            
+            return recommendations
+            
+        except Exception as e:
+            print(f"Error in ingredient-based recommendations: {e}")
+            return []

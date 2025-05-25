@@ -1,0 +1,632 @@
+{% extends "base.html" %} {% block title %}Nutrition Comparison - Food
+Recommender System{% endblock %} {% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="page-header">
+        <h1 class="display-5 fw-bold text-primary">
+          <i class="fas fa-balance-scale me-3"></i>Nutrition Comparison
+        </h1>
+        <p class="lead text-muted">
+          Compare nutritional values between different food products
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Selection -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-warning text-dark">
+          <h4 class="mb-0">
+            <i class="fas fa-search me-2"></i>Select Products to Compare
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="product1Search" class="form-label fw-bold"
+                >Product 1</label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="product1Search"
+                  class="form-control"
+                  placeholder="Search for first product..."
+                  onkeyup="searchProducts(1, this.value)"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  onclick="clearProduct(1)"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div id="product1Results" class="search-results mt-2"></div>
+              <div
+                id="product1Selected"
+                class="selected-product mt-2"
+                style="display: none"
+              ></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="product2Search" class="form-label fw-bold"
+                >Product 2</label
+              >
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="product2Search"
+                  class="form-control"
+                  placeholder="Search for second product..."
+                  onkeyup="searchProducts(2, this.value)"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  onclick="clearProduct(2)"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div id="product2Results" class="search-results mt-2"></div>
+              <div
+                id="product2Selected"
+                class="selected-product mt-2"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Add More Products -->
+          <div class="row mb-3">
+            <div class="col-12">
+              <button
+                id="addProductBtn"
+                class="btn btn-outline-primary"
+                onclick="addProductSlot()"
+              >
+                <i class="fas fa-plus me-1"></i>Add Another Product
+              </button>
+              <div id="additionalProducts" class="row mt-3"></div>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <button
+              id="compareBtn"
+              class="btn btn-warning btn-lg px-5"
+              onclick="compareProducts()"
+              disabled
+            >
+              <i class="fas fa-chart-bar me-2"></i>Compare Products
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison Options -->
+  <div class="row mb-4" id="comparisonOptions" style="display: none">
+    <div class="col-12">
+      <div class="card border-info">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-cog me-2"></i>Comparison Options
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Display Mode</label>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="displayMode"
+                  id="per100g"
+                  value="per_100g"
+                  checked
+                />
+                <label class="form-check-label" for="per100g">Per 100g</label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="displayMode"
+                  id="perServing"
+                  value="per_serving"
+                />
+                <label class="form-check-label" for="perServing"
+                  >Per Serving</label
+                >
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Focus Areas</label>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="showMacros"
+                  checked
+                />
+                <label class="form-check-label" for="showMacros"
+                  >Macronutrients</label
+                >
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="showMicros"
+                  checked
+                />
+                <label class="form-check-label" for="showMicros"
+                  >Micronutrients</label
+                >
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="showScores"
+                  checked
+                />
+                <label class="form-check-label" for="showScores"
+                  >Health Scores</label
+                >
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Highlight</label>
+              <select class="form-select" id="highlightMetric">
+                <option value="">No highlighting</option>
+                <option value="energy">Energy (calories)</option>
+                <option value="fat">Total Fat</option>
+                <option value="saturated_fat">Saturated Fat</option>
+                <option value="sugars">Sugars</option>
+                <option value="sodium">Sodium</option>
+                <option value="protein">Protein</option>
+                <option value="fiber">Fiber</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" style="display: none">
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <h3 class="fw-bold text-primary mb-3">
+          <i class="fas fa-chart-line me-2"></i>Comparison Overview
+        </h3>
+        <div id="summaryCards" class="row g-3"></div>
+      </div>
+    </div>
+
+    <!-- Detailed Comparison Table -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-table me-2"></i>Detailed Nutrition Comparison
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table
+                id="comparisonTable"
+                class="table table-hover mb-0"
+              ></table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual Charts -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-chart-pie me-2"></i>Macronutrient Distribution
+            </h5>
+          </div>
+          <div class="card-body">
+            <canvas id="macroChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-chart-bar me-2"></i>Key Nutrients Comparison
+            </h5>
+          </div>
+          <div class="card-body">
+            <canvas id="nutrientChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Health Insights -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-warning">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">
+              <i class="fas fa-lightbulb me-2"></i>Health Insights
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="healthInsights"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Winner Analysis -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-success">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-trophy me-2"></i>Best Choice Analysis
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="winnerAnalysis"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  let selectedProducts = {};
+  let productCount = 2;
+  let searchTimeout = null;
+
+  async function searchProducts(slot, query) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    if (query.length < 2) {
+      document.getElementById(`product${slot}Results`).innerHTML = "";
+      return;
+    }
+
+    searchTimeout = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/search?q=${encodeURIComponent(query)}&limit=5`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          displaySearchResults(slot, data.products);
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      }
+    }, 300);
+  }
+
+  function displaySearchResults(slot, products) {
+    const resultsContainer = document.getElementById(`product${slot}Results`);
+
+    if (products.length === 0) {
+      resultsContainer.innerHTML =
+        '<p class="text-muted small">No products found</p>';
+      return;
+    }
+
+    const resultsHTML = products
+      .map(
+        (product) => `
+        <div class="search-result-item" onclick="selectProduct(${slot}, '${
+          product.code
+        }', '${product.product_name.replace(/'/g, "\\'")}')">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${product.product_name}</strong>
+                    <br><small class="text-muted">${
+                      product.brands || "Generic"
+                    }</small>
+                </div>
+                <span class="nutri-score nutri-score-${(
+                  product.nutriscore_grade || "unknown"
+                ).toLowerCase()}">
+                    ${product.nutriscore_grade || "?"}
+                </span>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    resultsContainer.innerHTML = resultsHTML;
+  }
+
+  function selectProduct(slot, code, name) {
+    selectedProducts[slot] = { code, name };
+
+    // Hide search results and show selected product
+    document.getElementById(`product${slot}Results`).innerHTML = "";
+    document.getElementById(`product${slot}Search`).value = name;
+
+    const selectedContainer = document.getElementById(`product${slot}Selected`);
+    selectedContainer.innerHTML = `
+        <div class="selected-product-card">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong>${name}</strong>
+        </div>
+    `;
+    selectedContainer.style.display = "block";
+
+    // Enable compare button if at least 2 products selected
+    updateCompareButton();
+  }
+
+  function clearProduct(slot) {
+    delete selectedProducts[slot];
+    document.getElementById(`product${slot}Search`).value = "";
+    document.getElementById(`product${slot}Results`).innerHTML = "";
+    document.getElementById(`product${slot}Selected`).style.display = "none";
+    updateCompareButton();
+  }
+
+  function addProductSlot() {
+    productCount++;
+    const additionalContainer = document.getElementById("additionalProducts");
+
+    const newSlotHTML = `
+        <div class="col-md-6 mb-3" id="productSlot${productCount}">
+            <label for="product${productCount}Search" class="form-label fw-bold">Product ${productCount}</label>
+            <div class="input-group">
+                <input type="text" id="product${productCount}Search" class="form-control" 
+                       placeholder="Search for product ${productCount}..." onkeyup="searchProducts(${productCount}, this.value)">
+                <button class="btn btn-outline-danger" type="button" onclick="removeProductSlot(${productCount})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div id="product${productCount}Results" class="search-results mt-2"></div>
+            <div id="product${productCount}Selected" class="selected-product mt-2" style="display: none;"></div>
+        </div>
+    `;
+
+    additionalContainer.insertAdjacentHTML("beforeend", newSlotHTML);
+  }
+
+  function removeProductSlot(slot) {
+    delete selectedProducts[slot];
+    document.getElementById(`productSlot${slot}`).remove();
+    updateCompareButton();
+  }
+
+  function updateCompareButton() {
+    const selectedCount = Object.keys(selectedProducts).length;
+    const compareBtn = document.getElementById("compareBtn");
+    compareBtn.disabled = selectedCount < 2;
+    compareBtn.innerHTML =
+      selectedCount < 2
+        ? '<i class="fas fa-chart-bar me-2"></i>Select at least 2 products'
+        : `<i class="fas fa-chart-bar me-2"></i>Compare ${selectedCount} Products`;
+  }
+
+  async function compareProducts() {
+    const productCodes = Object.values(selectedProducts).map((p) => p.code);
+
+    try {
+      const response = await fetch("/api/nutrition-comparison", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          product_codes: productCodes,
+          display_mode: document.querySelector(
+            'input[name="displayMode"]:checked'
+          ).value,
+          focus_areas: {
+            macros: document.getElementById("showMacros").checked,
+            micros: document.getElementById("showMicros").checked,
+            scores: document.getElementById("showScores").checked,
+          },
+          highlight_metric: document.getElementById("highlightMetric").value,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        displayComparisonResults(data);
+        document.getElementById("comparisonOptions").style.display = "block";
+        document.getElementById("resultsSection").style.display = "block";
+        document
+          .getElementById("resultsSection")
+          .scrollIntoView({ behavior: "smooth" });
+      } else {
+        alert("Error: " + data.error);
+      }
+    } catch (error) {
+      console.error("Comparison error:", error);
+      alert("An error occurred during comparison");
+    }
+  }
+
+  function displayComparisonResults(data) {
+    // Display summary cards
+    displaySummaryCards(data.summary);
+
+    // Display comparison table
+    displayComparisonTable(data.detailed_comparison);
+
+    // Display charts
+    displayMacroChart(data.chart_data.macronutrients);
+    displayNutrientChart(data.chart_data.nutrients);
+
+    // Display insights
+    displayHealthInsights(data.health_insights);
+    displayWinnerAnalysis(data.winner_analysis);
+  }
+
+  function displaySummaryCards(summary) {
+    const cardsHTML = summary
+      .map(
+        (item) => `
+        <div class="col-md-6 col-lg-3">
+            <div class="summary-card ${item.is_winner ? "winner-card" : ""}">
+                <div class="summary-card-header">
+                    <h6 class="fw-bold">${item.product_name}</h6>
+                    ${
+                      item.is_winner
+                        ? '<i class="fas fa-crown text-warning"></i>'
+                        : ""
+                    }
+                </div>
+                <div class="summary-card-body">
+                    <div class="metric">
+                        <span class="metric-label">Calories:</span>
+                        <span class="metric-value">${item.calories}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Nutri-Score:</span>
+                        <span class="nutri-score nutri-score-${item.nutriscore.toLowerCase()}">${
+          item.nutriscore
+        }</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Health Score:</span>
+                        <span class="health-score score-${
+                          item.health_score_category
+                        }">${item.health_score}/100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("summaryCards").innerHTML = cardsHTML;
+  }
+
+  function displayComparisonTable(comparison) {
+    const products = comparison.products;
+    const metrics = comparison.metrics;
+
+    let tableHTML = '<thead class="table-dark"><tr><th>Nutrient</th>';
+    products.forEach((product) => {
+      tableHTML += `<th>${product.name}</th>`;
+    });
+    tableHTML += "</tr></thead><tbody>";
+
+    metrics.forEach((metric) => {
+      tableHTML += `<tr><td class="fw-bold">${metric.name}</td>`;
+      metric.values.forEach((value, index) => {
+        const isHighlighted = metric.highlighted && metric.highlighted[index];
+        const cellClass = isHighlighted ? "table-warning" : "";
+        tableHTML += `<td class="${cellClass}">${value}</td>`;
+      });
+      tableHTML += "</tr>";
+    });
+
+    tableHTML += "</tbody>";
+    document.getElementById("comparisonTable").innerHTML = tableHTML;
+  }
+
+  function displayMacroChart(data) {
+    const ctx = document.getElementById("macroChart").getContext("2d");
+    new Chart(ctx, {
+      type: "doughnut",
+      data: data,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    });
+  }
+
+  function displayNutrientChart(data) {
+    const ctx = document.getElementById("nutrientChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: data,
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  function displayHealthInsights(insights) {
+    const insightsHTML = insights
+      .map(
+        (insight) => `
+        <div class="alert alert-${insight.type} d-flex align-items-center">
+            <i class="fas fa-${insight.icon} me-2"></i>
+            <div>${insight.message}</div>
+        </div>
+    `
+      )
+      .join("");
+
+    document.getElementById("healthInsights").innerHTML = insightsHTML;
+  }
+
+  function displayWinnerAnalysis(analysis) {
+    const analysisHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="fw-bold text-success">
+                    <i class="fas fa-trophy me-1"></i>Overall Winner: ${
+                      analysis.overall_winner
+                    }
+                </h6>
+                <p class="text-muted">${analysis.overall_reason}</p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="fw-bold">Category Winners:</h6>
+                <ul class="list-unstyled">
+                    ${analysis.category_winners
+                      .map(
+                        (winner) =>
+                          `<li><strong>${winner.category}:</strong> ${
+                            winner.product
+                          } ${winner.reason ? `(${winner.reason})` : ""}</li>`
+                      )
+                      .join("")}
+                </ul>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("winnerAnalysis").innerHTML = analysisHTML;
+  }
+</script>
+{% endblock %}

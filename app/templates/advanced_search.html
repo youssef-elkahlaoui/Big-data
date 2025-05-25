@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Search - Food Recommender{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-lg-10 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>Advanced Product Search
+          </h2>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="row g-4">
+              <!-- Text Search -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label for="query" class="form-label">
+                    <i class="bi bi-search me-1"></i>Product Search
+                  </label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="query" 
+                    name="query" 
+                    placeholder="Search by name, brand, or ingredients"
+                    value="{{ filters.query if filters else '' }}"
+                  />
+                </div>
+              </div>
+
+              <!-- Country Filter -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label for="country" class="form-label">
+                    <i class="bi bi-globe me-1"></i>Country
+                  </label>
+                  <select class="form-select" id="country" name="country">
+                    <option value="">All Countries</option>
+                    {% for country in countries %}
+                    <option value="{{ country }}" 
+                      {% if filters and filters.country == country %}selected{% endif %}>
+                      {{ country.title().replace('-', ' ') }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <!-- Nutri-Score Filter -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label class="form-label">
+                    <i class="bi bi-shield-check me-1"></i>Nutri-Score
+                  </label>
+                  <div class="d-flex gap-2 flex-wrap">
+                    {% for grade in ['a', 'b', 'c', 'd', 'e'] %}
+                    <div class="form-check">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        name="nutriscore" 
+                        value="{{ grade }}"
+                        id="nutri_{{ grade }}"
+                        {% if filters and grade in filters.nutriscore %}checked{% endif %}
+                      />
+                      <label class="form-check-label nutriscore-badge nutriscore-{{ grade }}" for="nutri_{{ grade }}">
+                        {{ grade.upper() }}
+                      </label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Allergen Exclusion -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label class="form-label">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Exclude Allergens
+                  </label>
+                  <div class="row">
+                    {% for allergen in allergens[:8] %}
+                    <div class="col-6">
+                      <div class="form-check">
+                        <input 
+                          class="form-check-input" 
+                          type="checkbox" 
+                          name="allergens" 
+                          value="{{ allergen }}"
+                          id="allergen_{{ loop.index }}"
+                          {% if filters and allergen in filters.exclude_allergens %}checked{% endif %}
+                        />
+                        <label class="form-check-label" for="allergen_{{ loop.index }}">
+                          {{ allergen.title() }}
+                        </label>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Eco-Score Filter -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label for="min_ecoscore" class="form-label">
+                    <i class="bi bi-leaf me-1"></i>Minimum Eco-Score
+                  </label>
+                  <select class="form-select" id="min_ecoscore" name="min_ecoscore">
+                    <option value="">Any Eco-Score</option>
+                    {% for grade in ['a', 'b', 'c', 'd'] %}
+                    <option value="{{ grade }}" 
+                      {% if filters and filters.min_ecoscore == grade %}selected{% endif %}>
+                      {{ grade.upper() }} or better
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+
+              <!-- Packaging Preference -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label for="packaging" class="form-label">
+                    <i class="bi bi-box me-1"></i>Packaging Preference
+                  </label>
+                  <select class="form-select" id="packaging" name="packaging">
+                    <option value="">Any Packaging</option>
+                    <option value="recyclable" {% if filters and filters.packaging_preference == 'recyclable' %}selected{% endif %}>
+                      Recyclable
+                    </option>
+                    <option value="cardboard" {% if filters and filters.packaging_preference == 'cardboard' %}selected{% endif %}>
+                      Cardboard
+                    </option>
+                    <option value="glass" {% if filters and filters.packaging_preference == 'glass' %}selected{% endif %}>
+                      Glass
+                    </option>
+                    <option value="minimal" {% if filters and filters.packaging_preference == 'minimal' %}selected{% endif %}>
+                      Minimal Packaging
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Category Filter -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label for="category" class="form-label">
+                    <i class="bi bi-grid me-1"></i>Category
+                  </label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="category" 
+                    name="category" 
+                    placeholder="e.g., breakfast cereals, yogurt"
+                    value="{{ filters.category if filters else '' }}"
+                  />
+                </div>
+              </div>
+
+              <!-- Max Results -->
+              <div class="col-md-6">
+                <div class="filter-group">
+                  <label for="max_results" class="form-label">
+                    <i class="bi bi-list-ol me-1"></i>Maximum Results
+                  </label>
+                  <select class="form-select" id="max_results" name="max_results">
+                    <option value="20" {% if filters and filters.max_results == 20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if filters and filters.max_results == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if filters and filters.max_results == 100 %}selected{% endif %}>100</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-primary btn-lg me-3">
+                <i class="bi bi-search me-2"></i>Search Products
+              </button>
+              <a href="{{ url_for('advanced_search') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-2"></i>Reset Filters
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      {% if products %}
+      <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            {{ products|length }} Products Found
+          </h4>
+          <small class="text-muted">Sorted by relevance</small>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for product in products %}
+            <div class="col-lg-6">
+              <div class="card product-card h-100">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="product-title">{{ product.product_name }}</h6>
+                    <span class="nutriscore-badge nutriscore-{{ product.nutriscore_grade }}">
+                      {{ product.nutriscore_grade.upper() }}
+                    </span>
+                  </div>
+                  
+                  <div class="product-meta mb-2">
+                    <small class="text-muted">
+                      <i class="bi bi-tag me-1"></i>{{ product.categories[:50] }}...
+                    </small>
+                  </div>
+                  
+                  {% if product.countries %}
+                  <div class="product-meta mb-2">
+                    <small class="text-muted">
+                      <i class="bi bi-globe me-1"></i>{{ product.countries }}
+                    </small>
+                  </div>
+                  {% endif %}
+                  
+                  <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="nutrition-info">
+                      {% if product.energy_100g %}
+                      <small class="badge bg-light text-dark me-1">
+                        {{ product.energy_100g|round|int }} kJ
+                      </small>
+                      {% endif %}
+                      {% if product.ecoscore_grade and product.ecoscore_grade != 'unknown' %}
+                      <small class="badge bg-success">
+                        Eco: {{ product.ecoscore_grade.upper() }}
+                      </small>
+                      {% endif %}
+                    </div>
+                    <a href="{{ url_for('product_detail', product_code=product.code) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-eye me-1"></i>View
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% elif error %}
+      <div class="alert alert-warning mt-4">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add interactivity for better UX
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit form when significant filters change
+  const autoSubmitElements = document.querySelectorAll('select[name="country"], select[name="min_ecoscore"]');
+  
+  autoSubmitElements.forEach(element => {
+    element.addEventListener('change', function() {
+      // Optional: Auto-submit after a delay
+      // setTimeout(() => this.form.submit(), 500);
+    });
+  });
+  
+  // Add tooltips for allergen checkboxes
+  const allergenCheckboxes = document.querySelectorAll('input[name="allergens"]');
+  allergenCheckboxes.forEach(checkbox => {
+    checkbox.title = `Exclude products containing ${checkbox.value}`;
+  });
+});
+</script>
+{% endblock %}

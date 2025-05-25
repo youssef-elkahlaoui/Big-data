@@ -1,24 +1,512 @@
-{% extends "base.html" %} {% block title %}{{ product.product_name }} - Food
-Recommender System{% endblock %} {% block content %}
-<div class="row mb-4">
-  <div class="col-md-12">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <a href="{{ url_for('index') }}">Home</a>
-        </li>
-        <li class="breadcrumb-item">
-          <a href="{{ url_for('search') }}">Search</a>
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-          {{ product.product_name }}
-        </li>
-      </ol>
-    </nav>
-  </div>
+{% extends "base.html" %}
+
+{% block title %}{{ product.product_name }} - Food Recommender System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('index') }}"><i class="fas fa-home me-1"></i>Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('search') }}"><i class="fas fa-search me-1"></i>Search</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {{ product.product_name }}
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Product Header -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            {% if product.image_url %}
+            <div class="product-image-container">
+                <img src="{{ product.image_url }}" alt="{{ product.product_name }}" class="product-detail-image">
+            </div>
+            {% else %}
+            <div class="product-image-placeholder-large">
+                <i class="fas fa-image fa-4x text-muted"></i>
+                <p class="text-muted mt-2">No image available</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <div class="product-header">
+                <h1 class="display-5 fw-bold text-primary">{{ product.product_name }}</h1>
+                
+                {% if product.brands %}
+                <p class="lead text-muted">{{ product.brands }}</p>
+                {% endif %}
+                
+                <!-- Product Scores -->
+                <div class="product-scores mb-3">
+                    {% if product.nutriscore_grade %}
+                    <div class="score-item">
+                        <span class="score-label">Nutri-Score:</span>
+                        <span class="nutri-score nutri-score-{{ product.nutriscore_grade.lower() }} nutri-score-large">
+                            {{ product.nutriscore_grade }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.ecoscore_grade %}
+                    <div class="score-item">
+                        <span class="score-label">Eco-Score:</span>
+                        <span class="eco-score eco-score-{{ product.ecoscore_grade.lower() }} eco-score-large">
+                            {{ product.ecoscore_grade }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.nutrition_score_fr %}
+                    <div class="score-item">
+                        <span class="score-label">Nutrition Score:</span>
+                        <span class="nutrition-score">{{ product.nutrition_score_fr }}/100</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Quick Info -->
+                <div class="product-quick-info">
+                    {% if product.quantity %}
+                    <div class="info-item">
+                        <i class="fas fa-weight me-1"></i>
+                        <strong>Quantity:</strong> {{ product.quantity }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.countries %}
+                    <div class="info-item">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        <strong>Origin:</strong> {{ product.countries }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.manufacturing_places %}
+                    <div class="info-item">
+                        <i class="fas fa-industry me-1"></i>
+                        <strong>Manufacturing:</strong> {{ product.manufacturing_places }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="product-actions mt-4">
+                    <button class="btn btn-success btn-lg me-2" onclick="getRecommendations('{{ product.code }}')">
+                        <i class="fas fa-magic me-2"></i>Get Similar Products
+                    </button>
+                    <button class="btn btn-outline-primary me-2" onclick="addToComparison('{{ product.code }}', '{{ product.product_name }}')">
+                        <i class="fas fa-balance-scale me-2"></i>Add to Comparison
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="shareProduct()">
+                        <i class="fas fa-share me-2"></i>Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Details Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs nav-tabs-custom mb-4" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="nutrition-tab" data-bs-toggle="tab" data-bs-target="#nutrition" type="button" role="tab">
+                        <i class="fas fa-heartbeat me-1"></i>Nutrition Facts
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="ingredients-tab" data-bs-toggle="tab" data-bs-target="#ingredients" type="button" role="tab">
+                        <i class="fas fa-list me-1"></i>Ingredients
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="allergens-tab" data-bs-toggle="tab" data-bs-target="#allergens" type="button" role="tab">
+                        <i class="fas fa-exclamation-triangle me-1"></i>Allergens
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sustainability-tab" data-bs-toggle="tab" data-bs-target="#sustainability" type="button" role="tab">
+                        <i class="fas fa-leaf me-1"></i>Sustainability
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="recommendations-tab" data-bs-toggle="tab" data-bs-target="#recommendations" type="button" role="tab">
+                        <i class="fas fa-star me-1"></i>Recommendations
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="productTabContent">
+                <!-- Nutrition Facts Tab -->
+                <div class="tab-pane fade show active" id="nutrition" role="tabpanel" aria-labelledby="nutrition-tab">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Nutritional Values (per 100g)</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if product.energy_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Energy:</span>
+                                        <span class="nutrition-value">{{ product.energy_100g }} kJ ({{ product.energy_kcal_100g or 'N/A' }} kcal)</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.fat_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Fat:</span>
+                                        <span class="nutrition-value">{{ product.fat_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.saturated_fat_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Saturated Fat:</span>
+                                        <span class="nutrition-value">{{ product.saturated_fat_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.carbohydrates_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Carbohydrates:</span>
+                                        <span class="nutrition-value">{{ product.carbohydrates_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.sugars_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Sugars:</span>
+                                        <span class="nutrition-value">{{ product.sugars_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.fiber_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Fiber:</span>
+                                        <span class="nutrition-value">{{ product.fiber_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.proteins_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Protein:</span>
+                                        <span class="nutrition-value">{{ product.proteins_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.salt_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Salt:</span>
+                                        <span class="nutrition-value">{{ product.salt_100g }}g</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.sodium_100g %}
+                                    <div class="nutrition-item">
+                                        <span class="nutrition-label">Sodium:</span>
+                                        <span class="nutrition-value">{{ product.sodium_100g }}mg</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Nutrition Breakdown</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="nutritionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ingredients Tab -->
+                <div class="tab-pane fade" id="ingredients" role="tabpanel" aria-labelledby="ingredients-tab">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Ingredients List</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if product.ingredients_text %}
+                            <div class="ingredients-text">
+                                {{ product.ingredients_text }}
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No ingredients information available.</p>
+                            {% endif %}
+                            
+                            {% if product.categories %}
+                            <div class="categories-section mt-4">
+                                <h6 class="fw-bold">Categories:</h6>
+                                <div class="category-tags">
+                                    {% for category in product.categories.split(',') %}
+                                    <span class="badge bg-light text-dark me-1 mb-1">{{ category.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allergens Tab -->
+                <div class="tab-pane fade" id="allergens" role="tabpanel" aria-labelledby="allergens-tab">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Allergen Information</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if product.allergens %}
+                            <div class="alert alert-warning">
+                                <h6 class="fw-bold">Contains:</h6>
+                                <div class="allergen-list">
+                                    {% for allergen in product.allergens.split(',') %}
+                                    <span class="badge bg-warning text-dark me-1 mb-1">{{ allergen.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if product.traces %}
+                            <div class="alert alert-info">
+                                <h6 class="fw-bold">May contain traces of:</h6>
+                                <div class="traces-list">
+                                    {% for trace in product.traces.split(',') %}
+                                    <span class="badge bg-info text-white me-1 mb-1">{{ trace.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if not product.allergens and not product.traces %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                No specific allergen information available for this product.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sustainability Tab -->
+                <div class="tab-pane fade" id="sustainability" role="tabpanel" aria-labelledby="sustainability-tab">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-leaf me-2"></i>Environmental Impact</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if product.ecoscore_grade %}
+                                    <div class="eco-summary mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <span class="eco-score eco-score-{{ product.ecoscore_grade.lower() }} eco-score-large me-3">
+                                                {{ product.ecoscore_grade }}
+                                            </span>
+                                            <div>
+                                                <h6 class="mb-1">Eco-Score: {{ product.ecoscore_grade }}</h6>
+                                                <small class="text-muted">Environmental impact rating</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.packaging %}
+                                    <div class="packaging-info">
+                                        <h6 class="fw-bold">Packaging:</h6>
+                                        <p class="text-muted">{{ product.packaging }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if product.origins %}
+                                    <div class="origins-info">
+                                        <h6 class="fw-bold">Origins:</h6>
+                                        <p class="text-muted">{{ product.origins }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-recycle me-2"></i>Sustainability Tips</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="sustainabilityTips">
+                                        <div class="tip-item mb-3">
+                                            <i class="fas fa-lightbulb text-success me-2"></i>
+                                            <small>Look for products with minimal packaging</small>
+                                        </div>
+                                        <div class="tip-item mb-3">
+                                            <i class="fas fa-map-marker-alt text-info me-2"></i>
+                                            <small>Choose locally sourced products when possible</small>
+                                        </div>
+                                        <div class="tip-item mb-3">
+                                            <i class="fas fa-leaf text-success me-2"></i>
+                                            <small>Prefer organic or sustainably produced items</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Tab -->
+                <div class="tab-pane fade" id="recommendations" role="tabpanel" aria-labelledby="recommendations-tab">
+                    <div id="recommendationsContent">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading recommendations...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Finding similar products...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="row mb-5">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Load recommendations when tab is shown
+document.getElementById('recommendations-tab').addEventListener('shown.bs.tab', function () {
+    loadRecommendations('{{ product.code }}');
+});
+
+// Create nutrition chart
+document.addEventListener('DOMContentLoaded', function() {
+    createNutritionChart();
+});
+
+function createNutritionChart() {
+    const ctx = document.getElementById('nutritionChart');
+    if (!ctx) return;
+    
+    const data = {
+        labels: ['Protein', 'Carbs', 'Fat', 'Fiber'],
+        datasets: [{
+            data: [
+                {{ product.proteins_100g or 0 }},
+                {{ product.carbohydrates_100g or 0 }},
+                {{ product.fat_100g or 0 }},
+                {{ product.fiber_100g or 0 }}
+            ],
+            backgroundColor: [
+                '#28a745',
+                '#ffc107', 
+                '#dc3545',
+                '#17a2b8'
+            ]
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+async function loadRecommendations(productCode) {
+    try {
+        const response = await fetch(`/api/recommendations/${productCode}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayRecommendations(data.recommendations);
+        } else {
+            document.getElementById('recommendationsContent').innerHTML = 
+                '<div class="alert alert-warning">Unable to load recommendations</div>';
+        }
+    } catch (error) {
+        console.error('Error loading recommendations:', error);
+        document.getElementById('recommendationsContent').innerHTML = 
+            '<div class="alert alert-danger">Error loading recommendations</div>';
+    }
+}
+
+function displayRecommendations(recommendations) {
+    if (!recommendations || recommendations.length === 0) {
+        document.getElementById('recommendationsContent').innerHTML = 
+            '<div class="alert alert-info">No similar products found</div>';
+        return;
+    }
+    
+    const html = `
+        <div class="row g-3">
+            ${recommendations.map(product => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="product-card h-100">
+                        <div class="product-card-body">
+                            <h6 class="product-name">${product.product_name}</h6>
+                            <p class="text-muted small">${product.brands || 'Generic'}</p>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="nutri-score nutri-score-${(product.nutriscore_grade || 'unknown').toLowerCase()}">
+                                    ${product.nutriscore_grade || '?'}
+                                </span>
+                                <span class="similarity-score">
+                                    ${Math.round(product.similarity_score * 100)}% similar
+                                </span>
+                            </div>
+                            <a href="/product/${product.code}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    document.getElementById('recommendationsContent').innerHTML = html;
+}
+
+async function getRecommendations(productCode) {
+    window.location.href = `/recommendations/${productCode}`;
+}
+
+function addToComparison(code, name) {
+    // Add to comparison logic (similar to search page)
+    alert('Product added to comparison!');
+}
+
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ product.product_name }}',
+            text: 'Check out this product on Food Recommender System',
+            url: window.location.href
+        });
+    } else {
+        // Fallback - copy to clipboard
+        navigator.clipboard.writeText(window.location.href);
+        alert('Product link copied to clipboard!');
+    }
+}
+</script>
+{% endblock %}
   <div class="col-md-12">
     <div class="card">
       <div class="card-header">
