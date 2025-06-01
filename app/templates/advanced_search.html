@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Search - Food Recommender{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Advanced Product Search</h1>
+        <p class="text-gray-600">Use detailed filters to find exactly what you're looking for</p>
+    </div>
+
+    <!-- Advanced Search Form -->
+    <div class="bg-white rounded-xl p-8 shadow-sm border border-gray-100 mb-8">
+        <form method="GET" action="{{ url_for('advanced_search') }}" class="space-y-8">
+            
+            <!-- Basic Search -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-search mr-2 text-primary-600"></i>Basic Search
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="query" class="block text-sm font-medium text-gray-700 mb-2">Product Name/Keywords</label>
+                        <input type="text" 
+                               id="query"
+                               name="query" 
+                               placeholder="e.g., organic pasta, greek yogurt..."
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('query', '') }}">
+                    </div>
+                    <div>
+                        <label for="brands" class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                        <input type="text" 
+                               id="brands"
+                               name="brands" 
+                               placeholder="e.g., Nestlé, Danone..."
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('brands', '') }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nutritional Criteria -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-heart mr-2 text-danger-600"></i>Nutritional Criteria
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="nutriscore" class="block text-sm font-medium text-gray-700 mb-2">Nutri-Score</label>
+                        <select name="nutriscore" id="nutriscore" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                            <option value="">Any Score</option>
+                            <option value="a" {{ 'selected' if request.args.get('nutriscore') == 'a' }}>A (Excellent)</option>
+                            <option value="b" {{ 'selected' if request.args.get('nutriscore') == 'b' }}>B (Good)</option>
+                            <option value="c" {{ 'selected' if request.args.get('nutriscore') == 'c' }}>C (Fair)</option>
+                            <option value="d" {{ 'selected' if request.args.get('nutriscore') == 'd' }}>D (Poor)</option>
+                            <option value="e" {{ 'selected' if request.args.get('nutriscore') == 'e' }}>E (Bad)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="max_energy" class="block text-sm font-medium text-gray-700 mb-2">Max Energy (kJ/100g)</label>
+                        <input type="number" 
+                               id="max_energy"
+                               name="max_energy" 
+                               placeholder="e.g., 2000"
+                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('max_energy', '') }}">
+                    </div>
+                    <div>
+                        <label for="min_proteins" class="block text-sm font-medium text-gray-700 mb-2">Min Proteins (g/100g)</label>
+                        <input type="number" 
+                               id="min_proteins"
+                               name="min_proteins" 
+                               placeholder="e.g., 10"
+                               step="0.1"
+                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('min_proteins', '') }}">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                        <label for="max_sugars" class="block text-sm font-medium text-gray-700 mb-2">Max Sugars (g/100g)</label>
+                        <input type="number" 
+                               id="max_sugars"
+                               name="max_sugars" 
+                               placeholder="e.g., 10"
+                               step="0.1"
+                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('max_sugars', '') }}">
+                    </div>
+                    <div>
+                        <label for="max_fat" class="block text-sm font-medium text-gray-700 mb-2">Max Fat (g/100g)</label>
+                        <input type="number" 
+                               id="max_fat"
+                               name="max_fat" 
+                               placeholder="e.g., 20"
+                               step="0.1"
+                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('max_fat', '') }}">
+                    </div>
+                    <div>
+                        <label for="max_salt" class="block text-sm font-medium text-gray-700 mb-2">Max Salt (g/100g)</label>
+                        <input type="number" 
+                               id="max_salt"
+                               name="max_salt" 
+                               placeholder="e.g., 1.5"
+                               step="0.1"
+                               class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                               value="{{ request.args.get('max_salt', '') }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories and Geography -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-globe mr-2 text-primary-600"></i>Categories & Geography
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select name="category" id="category" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                            <option value="">All Categories</option>
+                            <option value="en:groceries" {{ 'selected' if request.args.get('category') == 'en:groceries' }}>Groceries</option>
+                            <option value="en:sweetened-beverages" {{ 'selected' if request.args.get('category') == 'en:sweetened-beverages' }}>Sweetened Beverages</option>
+                            <option value="en:biscuits" {{ 'selected' if request.args.get('category') == 'en:biscuits' }}>Biscuits</option>
+                            <option value="en:snacks" {{ 'selected' if request.args.get('category') == 'en:snacks' }}>Snacks</option>
+                            <option value="en:candies" {{ 'selected' if request.args.get('category') == 'en:candies' }}>Candies</option>
+                            <option value="en:beverages" {{ 'selected' if request.args.get('category') == 'en:beverages' }}>Beverages</option>
+                            <option value="en:dark-chocolates" {{ 'selected' if request.args.get('category') == 'en:dark-chocolates' }}>Dark Chocolates</option>
+                            <option value="en:frozen-foods" {{ 'selected' if request.args.get('category') == 'en:frozen-foods' }}>Frozen Foods</option>
+                            <option value="en:cheeses" {{ 'selected' if request.args.get('category') == 'en:cheeses' }}>Cheeses</option>
+                            <option value="en:crackers-appetizers" {{ 'selected' if request.args.get('category') == 'en:crackers-appetizers' }}>Crackers Appetizers</option>
+                            <option value="en:breads" {{ 'selected' if request.args.get('category') == 'en:breads' }}>Breads</option>
+                            <option value="en:salads" {{ 'selected' if request.args.get('category') == 'en:salads' }}>Salads</option>
+                            <option value="en:white-hams" {{ 'selected' if request.args.get('category') == 'en:white-hams' }}>White Hams</option>
+                            <option value="en:virgin-olive-oils" {{ 'selected' if request.args.get('category') == 'en:virgin-olive-oils' }}>Virgin Olive Oils</option>
+                            <option value="en:confectioneries" {{ 'selected' if request.args.get('category') == 'en:confectioneries' }}>Confectioneries</option>
+                            <option value="en:yogurts" {{ 'selected' if request.args.get('category') == 'en:yogurts' }}>Yogurts</option>
+                            <option value="en:breakfast-cereals" {{ 'selected' if request.args.get('category') == 'en:breakfast-cereals' }}>Breakfast Cereals</option>
+                            <option value="en:frozen-desserts" {{ 'selected' if request.args.get('category') == 'en:frozen-desserts' }}>Frozen Desserts</option>
+                            <option value="en:plant-based-beverages" {{ 'selected' if request.args.get('category') == 'en:plant-based-beverages' }}>Plant Based Beverages</option>
+                        </select>
+                    </div>                    <div>
+                        <label for="country" class="block text-sm font-medium text-gray-700 mb-2">Available in Country</label>
+                        <select name="country" id="country" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                            <option value="">Any Country</option>
+                            <option value="en:france" {{ 'selected' if request.args.get('country') == 'en:france' }}>France</option>
+                            <option value="en:united-states" {{ 'selected' if request.args.get('country') == 'en:united-states' }}>United States</option>
+                            <option value="en:spain" {{ 'selected' if request.args.get('country') == 'en:spain' }}>Spain</option>
+                            <option value="en:germany" {{ 'selected' if request.args.get('country') == 'en:germany' }}>Germany</option>
+                            <option value="en:world" {{ 'selected' if request.args.get('country') == 'en:world' }}>World</option>
+                            <option value="en:belgium" {{ 'selected' if request.args.get('country') == 'en:belgium' }}>Belgium</option>
+                            <option value="en:switzerland" {{ 'selected' if request.args.get('country') == 'en:switzerland' }}>Switzerland</option>
+                            <option value="en:italy" {{ 'selected' if request.args.get('country') == 'en:italy' }}>Italy</option>
+                            <option value="en:united-kingdom" {{ 'selected' if request.args.get('country') == 'en:united-kingdom' }}>United Kingdom</option>
+                            <option value="en:morocco" {{ 'selected' if request.args.get('country') == 'en:morocco' }}>Morocco</option>
+                            <option value="en:netherlands" {{ 'selected' if request.args.get('country') == 'en:netherlands' }}>Netherlands</option>
+                            <option value="en:austria" {{ 'selected' if request.args.get('country') == 'en:austria' }}>Austria</option>
+                            <option value="en:portugal" {{ 'selected' if request.args.get('country') == 'en:portugal' }}>Portugal</option>
+                            <option value="en:canada" {{ 'selected' if request.args.get('country') == 'en:canada' }}>Canada</option>
+                            <option value="en:poland" {{ 'selected' if request.args.get('country') == 'en:poland' }}>Poland</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dietary Restrictions -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-leaf mr-2 text-success-600"></i>Dietary Preferences
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {% for restriction in ['vegan', 'vegetarian', 'gluten_free', 'dairy_free', 'organic', 'no_additives', 'palm_oil_free', 'kosher'] %}
+                        <label class="inline-flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" 
+                                   name="dietary_restrictions" 
+                                   value="{{ restriction }}" 
+                                   class="form-checkbox text-success-600 rounded focus:ring-success-500"
+                                   {{ 'checked' if restriction in request.args.getlist('dietary_restrictions') }}>
+                            <span class="ml-3 text-sm text-gray-700 font-medium">{{ restriction.replace('_', ' ').title() }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Allergen Exclusions -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2 text-warning-600"></i>Exclude Allergens
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {% for allergen in ['gluten', 'milk', 'eggs', 'nuts', 'peanuts', 'soy', 'fish', 'shellfish', 'sesame', 'mustard', 'celery', 'lupin'] %}
+                        <label class="inline-flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" 
+                                   name="exclude_allergens" 
+                                   value="{{ allergen }}" 
+                                   class="form-checkbox text-danger-600 rounded focus:ring-danger-500"
+                                   {{ 'checked' if allergen in request.args.getlist('exclude_allergens') }}>
+                            <span class="ml-3 text-sm text-gray-700 font-medium">{{ allergen.title() }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Sustainability -->
+            <div class="pb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-recycle mr-2 text-success-600"></i>Sustainability
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="packaging_preference" class="block text-sm font-medium text-gray-700 mb-2">Packaging Preference</label>
+                        <select name="packaging_preference" id="packaging_preference" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                            <option value="">Any Packaging</option>
+                            <option value="recyclable" {{ 'selected' if request.args.get('packaging_preference') == 'recyclable' }}>Recyclable</option>
+                            <option value="cardboard" {{ 'selected' if request.args.get('packaging_preference') == 'cardboard' }}>Cardboard</option>
+                            <option value="glass" {{ 'selected' if request.args.get('packaging_preference') == 'glass' }}>Glass</option>
+                            <option value="minimal" {{ 'selected' if request.args.get('packaging_preference') == 'minimal' }}>Minimal Packaging</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="limit" class="block text-sm font-medium text-gray-700 mb-2">Number of Results</label>
+                        <select name="limit" id="limit" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                            <option value="20" {{ 'selected' if request.args.get('limit', '20') == '20' }}>20 products</option>
+                            <option value="50" {{ 'selected' if request.args.get('limit') == '50' }}>50 products</option>
+                            <option value="100" {{ 'selected' if request.args.get('limit') == '100' }}>100 products</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+                <button type="submit" class="bg-primary-600 text-white px-8 py-4 rounded-lg hover:bg-primary-700 transition-colors font-semibold text-lg inline-flex items-center justify-center">
+                    <i class="fas fa-search mr-3"></i>
+                    Search Products
+                </button>
+                <a href="{{ url_for('advanced_search') }}" class="bg-gray-100 text-gray-700 px-8 py-4 rounded-lg hover:bg-gray-200 transition-colors font-semibold text-lg inline-flex items-center justify-center">
+                    <i class="fas fa-undo mr-3"></i>
+                    Clear Filters
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {% if products %}
+        <!-- Search Results -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    Search Results ({{ products|length }})
+                </h2>
+                <div class="text-sm text-gray-600">
+                    {% if request.args.get('query') %}
+                        for "{{ request.args.get('query') }}"
+                    {% else %}
+                        with applied filters
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            {% for product in products %}
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                        <a class="hover:text-primary-600 transition-colors">
+                                            {{ product.get('product_name', 'Unknown Product') }}
+                                        </a>
+                                    </h3>
+                                    
+                                    <div class="space-y-1 text-sm text-gray-600">
+                                        {% if product.get('brands') %}
+                                            <p><i class="fas fa-tag mr-1"></i>{{ product.get('brands') }}</p>
+                                        {% endif %}
+                                        {% if product.get('categories') %}
+                                            <p><i class="fas fa-folder mr-1"></i>{{ product.get('categories')[:80] }}{{ '...' if product.get('categories', '')|length > 80 else '' }}</p>
+                                        {% endif %}
+                                        <p><i class="fas fa-barcode mr-1"></i>{{ product.get('code', product.get('_id', '')) }}</p>
+                                    </div>
+                                </div>                                <!-- Nutri-Score Badge -->
+                                {% if product.get('nutriscore_grade') and product.get('nutriscore_grade') != 'unknown' %}
+                                    <div class="nutriscore-badge nutriscore-{{ product.get('nutriscore_grade', '').lower() }} ml-4 flex-shrink-0">
+                                        {{ product.get('nutriscore_grade', '').upper() }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Nutritional Info Preview -->
+                            {% if product.get('energy_100g') or product.get('proteins_100g') or product.get('fat_100g') or product.get('sugars_100g') %}
+                                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-600">                                    {% if product.get('energy_100g') %}
+                                        <div class="bg-gray-50 px-3 py-2 rounded">
+                                            <div class="font-medium">Energy</div>
+                                            <div>{{ product.get('energy_100g') }} kJ</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if product.get('proteins_100g') %}
+                                        <div class="bg-gray-50 px-3 py-2 rounded">
+                                            <div class="font-medium">Protein</div>
+                                            <div>{{ product.get('proteins_100g') }}g</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if product.get('fat_100g') %}
+                                        <div class="bg-gray-50 px-3 py-2 rounded">
+                                            <div class="font-medium">Fat</div>
+                                            <div>{{ product.get('fat_100g') }}g</div>
+                                        </div>
+                                    {% endif %}
+                                    {% if product.get('sugars_100g') %}
+                                        <div class="bg-gray-50 px-3 py-2 rounded">
+                                            <div class="font-medium">Sugars</div>
+                                            <div>{{ product.get('sugars_100g') }}g</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>                        <!-- Action Button -->
+                        <div class="mt-4 lg:mt-0 lg:ml-6">
+                            <button onclick="showProductDetails('{{ product.get('code', product.get('_id', '')) }}')" 
+                               class="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center font-medium">
+                                <i class="fas fa-eye mr-2"></i>
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}        </div>
+
+    {% elif request.args %}
+        <!-- No Results -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+            <i class="fas fa-search text-yellow-600 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
+            <p class="text-gray-600 mb-4">
+                No products match your search criteria. Try adjusting your filters or search terms.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ url_for('advanced_search') }}" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                    Clear Filters
+                </a>
+                <a href="{{ url_for('search') }}" class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    Basic Search
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Product Details Popup Modal -->
+<div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-start mb-4">
+                <h2 id="modalTitle" class="text-xl font-bold text-gray-900">Product Details</h2>
+                <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="modalLoading" class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-2xl text-primary-600 mb-2"></i>
+                <p class="text-gray-600">Loading product details...</p>
+            </div>
+              <!-- Product Content -->
+            <div id="modalContent" class="hidden">                <!-- Product Image -->
+                <div class="mb-6 flex justify-center">
+                    <div id="productImageContainer" class="w-full max-w-xs h-48 sm:h-56">
+                        <!-- Image will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Product Name and Brand -->
+                <div class="mb-4">
+                    <h3 id="productName" class="text-lg font-semibold text-gray-900 mb-2"></h3>
+                    <p id="productBrand" class="text-gray-600"></p>
+                    <p id="productCode" class="text-sm text-gray-500 mt-1"></p>
+                </div>
+                
+                <!-- Nutriscore -->
+                <div class="mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-gray-700">Nutri-Score:</span>
+                        <div id="nutriscoreBadge" class="nutriscore-badge"></div>
+                    </div>
+                </div>
+                
+                <!-- Categories -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Categories</h4>
+                    <p id="productCategories" class="text-gray-600 text-sm"></p>
+                </div>
+                
+                <!-- Nutritional Information -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Nutrition Facts (per 100g)</h4>
+                    <div id="nutritionGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <!-- Nutrition items will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Ingredients -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Ingredients</h4>
+                    <p id="productIngredients" class="text-gray-600 text-sm leading-relaxed"></p>
+                </div>
+            </div>
+            
+            <!-- Error State -->
+            <div id="modalError" class="hidden text-center py-8">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-500 mb-2"></i>
+                <p class="text-red-600">Failed to load product details</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.nutriscore-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: white;
+    font-size: 16px;
+}
+
+.nutriscore-a { background-color: #00B04F; }
+.nutriscore-b { background-color: #85BB2F; }
+.nutriscore-c { background-color: #FFCE00; color: #333; }
+.nutriscore-d { background-color: #FF6600; }
+.nutriscore-e { background-color: #FF0000; }
+
+.form-checkbox {
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+    width: 18px;
+    height: 18px;
+}
+
+.form-checkbox:checked {
+    background-color: currentColor;
+    border-color: currentColor;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form submission with loading state
+    document.querySelector('form').addEventListener('submit', function() {
+        const button = this.querySelector('button[type="submit"]');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Searching...';
+        button.disabled = true;
+        
+        // Re-enable after 30 seconds as fallback
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 30000);
+    });
+
+    // Smart form interactions
+    const nutritionInputs = ['max_energy', 'min_proteins', 'max_sugars', 'max_fat', 'max_salt'];
+    nutritionInputs.forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('input', function() {
+                // Add validation feedback
+                const value = parseFloat(this.value);
+                if (value < 0) {
+                    this.setCustomValidity('Value must be positive');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+    });
+
+    // Filter counter
+    function updateFilterCounter() {
+        const form = document.querySelector('form');
+        const formData = new FormData(form);
+        let filterCount = 0;
+        
+        for (let [key, value] of formData.entries()) {
+            if (value && value.trim() !== '') {
+                filterCount++;
+            }
+        }
+        
+        // Update page title or add indicator
+        if (filterCount > 0) {
+            document.title = `Advanced Search (${filterCount} filters) - Food Recommender`;
+        }
+    }
+
+    // Update filter counter on input changes
+    document.querySelector('form').addEventListener('input', updateFilterCounter);
+    document.querySelector('form').addEventListener('change', updateFilterCounter);
+      // Initial count
+    updateFilterCounter();
+
+    // Product Details Popup Functions
+    function showProductDetails(productCode) {
+        const modal = document.getElementById('productModal');
+        const loading = document.getElementById('modalLoading');
+        const content = document.getElementById('modalContent');
+        const error = document.getElementById('modalError');
+        
+        // Show modal and loading state
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        loading.classList.remove('hidden');
+        content.classList.add('hidden');
+        error.classList.add('hidden');
+        
+        // Fetch product details
+        fetch(`/api/product/${productCode}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })            .then(product => {
+                console.log('API Response received:', product); // Debug log
+                console.log('Image URL from API:', product.image_url); // Debug log
+                populateProductModal(product);
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error('Error fetching product details:', err);
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+            });
+    }    function populateProductModal(product) {
+        console.log('=== populateProductModal called ===');
+        console.log('Full product object:', product);
+        console.log('product.image_url value:', product.image_url);
+        console.log('product.image_url type:', typeof product.image_url);
+        console.log('product.image_url length:', product.image_url ? product.image_url.length : 'N/A');
+        
+        // Product image
+        const imageContainer = document.getElementById('productImageContainer');
+        
+        if (product.image_url && product.image_url.trim() !== '') {
+            console.log('✅ Image URL is valid, proceeding with loading...');
+            console.log('Loading image URL:', product.image_url); // Debug log
+            
+            // Show loading state for image
+            imageContainer.innerHTML = `
+                <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p class="text-xs">Loading image...</p>
+                    </div>
+                </div>
+            `;
+            
+            // Create image element programmatically to avoid inline event handler issues
+            const img = new Image();
+            img.className = "w-full h-full object-cover rounded-lg shadow-md";
+            img.alt = product.product_name || 'Product image';
+            
+            // Set crossOrigin to handle CORS issues
+            img.crossOrigin = "anonymous";
+            
+            img.onload = function() {
+                console.log('Image loaded successfully:', this.src);
+                imageContainer.innerHTML = '';
+                imageContainer.appendChild(this);
+            };
+            
+            img.onerror = function() {
+                console.log('Image failed to load:', this.src);
+                console.log('Attempting alternative loading method...');
+                
+                // Try loading without crossOrigin
+                const img2 = new Image();
+                img2.className = "w-full h-full object-cover rounded-lg shadow-md";
+                img2.alt = product.product_name || 'Product image';
+                
+                img2.onload = function() {
+                    console.log('Image loaded with alternative method:', this.src);
+                    imageContainer.innerHTML = '';
+                    imageContainer.appendChild(this);
+                };
+                
+                img2.onerror = function() {
+                    console.log('Alternative image loading also failed:', this.src);
+                    const urlPreview = product.image_url.length > 50 ? 
+                        product.image_url.substring(0, 50) + '...' : 
+                        product.image_url;
+                        
+                    imageContainer.innerHTML = `
+                        <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center text-gray-400">
+                                <i class="fas fa-image text-3xl mb-2"></i>
+                                <p class="text-xs">Image unavailable</p>
+                                <p class="text-xs mt-1 text-red-400">URL: ${urlPreview}</p>
+                                <button onclick="window.open('${product.image_url}', '_blank')" 
+                                        class="text-xs text-blue-500 hover:text-blue-700 mt-1 underline">
+                                    Open in new tab
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                };
+                
+                img2.src = product.image_url;
+            };
+            
+            // Start loading the image
+            img.src = product.image_url;
+              } else {
+            console.log('❌ No valid image URL found');
+            console.log('image_url value:', product.image_url);
+            imageContainer.innerHTML = `
+                <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <i class="fas fa-image text-3xl mb-2"></i>
+                        <p class="text-xs">No image URL provided</p>
+                        <p class="text-xs text-red-400 mt-1">Debug: ${JSON.stringify(product.image_url)}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Product name and brand
+        document.getElementById('productName').textContent = product.product_name || 'N/A';
+        document.getElementById('productBrand').textContent = product.brands || 'N/A';
+        document.getElementById('productCode').textContent = `Product Code: ${product.code || 'N/A'}`;
+        // Nutriscore
+        const nutriscoreBadge = document.getElementById('nutriscoreBadge');
+        const grade = (product.nutriscore_grade || 'unknown').toLowerCase();
+        nutriscoreBadge.textContent = grade.toUpperCase();
+        nutriscoreBadge.className = `nutriscore-badge nutriscore-${grade}`;
+        
+        // Categories
+        document.getElementById('productCategories').textContent = product.categories || 'N/A';
+        
+        // Nutrition facts
+        const nutritionGrid = document.getElementById('nutritionGrid');
+        nutritionGrid.innerHTML = '';
+        
+        const nutritionItems = [
+            { label: 'Energy', value: product.energy_100g, unit: 'kJ' },
+            { label: 'Fat', value: product.fat_100g, unit: 'g' },
+            { label: 'Carbohydrates', value: product.carbohydrates_100g, unit: 'g' },
+            { label: 'Proteins', value: product.proteins_100g, unit: 'g' },
+            { label: 'Salt', value: product.salt_100g, unit: 'g' },
+            { label: 'Sugars', value: product.sugars_100g, unit: 'g' },
+            { label: 'Fiber', value: product.fiber_100g, unit: 'g' },
+            { label: 'Sodium', value: product.sodium_100g, unit: 'g' }
+        ];
+        
+        nutritionItems.forEach(item => {
+            if (item.value !== null && item.value !== undefined) {
+                const nutritionItem = document.createElement('div');
+                nutritionItem.className = 'bg-gray-50 px-3 py-2 rounded text-center';
+                nutritionItem.innerHTML = `
+                    <div class="text-xs font-medium text-gray-700">${item.label}</div>
+                    <div class="text-sm font-semibold text-gray-900">${item.value}${item.unit}</div>
+                `;
+                nutritionGrid.appendChild(nutritionItem);
+            }
+        });
+        
+        // Ingredients
+        const ingredients = product.ingredients_text || 'No ingredient information available';
+        document.getElementById('productIngredients').textContent = ingredients;
+    }
+
+    function closeProductModal() {
+        const modal = document.getElementById('productModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('productModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeProductModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeProductModal();
+        }
+    });
+</script>
+{% endblock %}

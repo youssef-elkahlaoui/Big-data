@@ -1,0 +1,22 @@
+{
+  "model_type": "memory_optimized_content_recommender",
+  "total_products": 302935,
+  "sample_size": 3031,
+  "vocabulary_size": 2000,
+  "average_response_time": 1.3146280288696288,
+  "average_category_diversity": 0.775,
+  "training_date": "2025-05-27T17:35:29.543246",
+  "model_version": "2.0_memory_optimized",
+  "memory_optimizations": {
+    "streaming_recommendations": true,
+    "reduced_vocabulary": true,
+    "sample_based_analysis": true,
+    "efficient_persistence": true
+  },
+  "recommended_max_memory": "25GB",
+  "spark_config": {
+    "driver_memory": "6g",
+    "executor_memory": "4g",
+    "adaptive_enabled": true
+  }
+}

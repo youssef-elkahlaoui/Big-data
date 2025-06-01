@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Recipe Recommendations - Food Recommender{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Recipe-Based Product Recommendations</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+            Get personalized food product recommendations based on your recipe ingredients, 
+            dietary preferences, and location.
+        </p>
+    </div>
+
+    <!-- Recipe Input Form -->
+    <div class="bg-white rounded-xl p-8 shadow-sm border border-gray-100 mb-8">
+        <form method="POST" action="{{ url_for('recipe_recommendations') }}" class="space-y-6">
+            <!-- Recipe Basics -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Ingredients -->
+                <div>
+                    <label for="ingredients" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-list mr-2"></i>Recipe Ingredients
+                    </label>
+                    <textarea name="ingredients" 
+                              id="ingredients"
+                              rows="4" 
+                              placeholder="Enter ingredients separated by commas (e.g., tomatoes, basil, mozzarella, pasta)"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+                              required>{{ request.form.get('ingredients', '') }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Separate multiple ingredients with commas</p>
+                </div>
+
+                <!-- Recipe Description -->
+                <div>
+                    <label for="recipe_description" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-align-left mr-2"></i>Recipe Description (Optional)
+                    </label>
+                    <textarea name="recipe_description" 
+                              id="recipe_description"
+                              rows="4" 
+                              placeholder="Describe your recipe (e.g., 'Italian pasta dish with fresh tomatoes and herbs')"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none">{{ request.form.get('recipe_description', '') }}</textarea>
+                </div>
+            </div>
+
+            <!-- Location and Preferences -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Country -->
+                <div>
+                    <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-globe mr-2"></i>Country/Region
+                    </label>
+                    <select name="country" id="country" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" required>
+                        <option value="">Select Country</option>
+                        <option value="france" {{ 'selected' if request.form.get('country') == 'france' }}>France</option>
+                        <option value="united-states" {{ 'selected' if request.form.get('country') == 'united-states' }}>United States</option>
+                        <option value="germany" {{ 'selected' if request.form.get('country') == 'germany' }}>Germany</option>
+                        <option value="italy" {{ 'selected' if request.form.get('country') == 'italy' }}>Italy</option>
+                        <option value="spain" {{ 'selected' if request.form.get('country') == 'spain' }}>Spain</option>
+                        <option value="united-kingdom" {{ 'selected' if request.form.get('country') == 'united-kingdom' }}>United Kingdom</option>
+                        <option value="canada" {{ 'selected' if request.form.get('country') == 'canada' }}>Canada</option>
+                        <option value="australia" {{ 'selected' if request.form.get('country') == 'australia' }}>Australia</option>
+                        <option value="belgium" {{ 'selected' if request.form.get('country') == 'belgium' }}>Belgium</option>
+                        <option value="netherlands" {{ 'selected' if request.form.get('country') == 'netherlands' }}>Netherlands</option>
+                    </select>
+                </div>
+
+                <!-- Nutri-Score Filter -->
+                <div>
+                    <label for="nutriscore_filter" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-heart mr-2"></i>Preferred Nutri-Score
+                    </label>
+                    <select name="nutriscore_filter" id="nutriscore_filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                        <option value="">Any Score</option>
+                        <option value="a,b" {{ 'selected' if request.form.get('nutriscore_filter') == 'a,b' }}>A-B (Best)</option>
+                        <option value="a,b,c" {{ 'selected' if request.form.get('nutriscore_filter') == 'a,b,c' }}>A-C (Good)</option>
+                        <option value="a" {{ 'selected' if request.form.get('nutriscore_filter') == 'a' }}>A Only (Excellent)</option>
+                    </select>
+                </div>
+
+                <!-- Number of Recommendations -->
+                <div>
+                    <label for="num_recommendations" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-hashtag mr-2"></i>Number of Results
+                    </label>
+                    <select name="num_recommendations" id="num_recommendations" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                        <option value="10" {{ 'selected' if request.form.get('num_recommendations') == '10' }}>10 products</option>
+                        <option value="15" {{ 'selected' if request.form.get('num_recommendations', '15') == '15' }}>15 products</option>
+                        <option value="20" {{ 'selected' if request.form.get('num_recommendations') == '20' }}>20 products</option>
+                        <option value="25" {{ 'selected' if request.form.get('num_recommendations') == '25' }}>25 products</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dietary Restrictions -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    <i class="fas fa-leaf mr-2"></i>Dietary Restrictions & Preferences
+                </label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for restriction in ['vegan', 'vegetarian', 'gluten_free', 'dairy_free', 'organic', 'no_additives'] %}
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" 
+                                   name="dietary_restrictions" 
+                                   value="{{ restriction }}" 
+                                   class="form-checkbox text-primary-600 rounded focus:ring-primary-500"
+                                   {{ 'checked' if restriction in request.form.getlist('dietary_restrictions') }}>
+                            <span class="ml-2 text-sm text-gray-700 capitalize">{{ restriction.replace('_', ' ') }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Allergen Exclusions -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Exclude Allergens
+                </label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for allergen in ['gluten', 'milk', 'eggs', 'nuts', 'soy', 'fish', 'shellfish', 'sesame'] %}
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" 
+                                   name="exclude_allergens" 
+                                   value="{{ allergen }}" 
+                                   class="form-checkbox text-danger-600 rounded focus:ring-danger-500"
+                                   {{ 'checked' if allergen in request.form.getlist('exclude_allergens') }}>
+                            <span class="ml-2 text-sm text-gray-700 capitalize">{{ allergen }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" class="bg-primary-600 text-white px-8 py-4 rounded-lg hover:bg-primary-700 transition-colors font-semibold text-lg inline-flex items-center">
+                    <i class="fas fa-magic mr-3"></i>
+                    Get Recipe Recommendations
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if recommendations %}
+        <!-- Results Section -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    Recommended Products ({{ recommendations|length }})
+                </h2>
+                <div class="text-sm text-gray-600">
+                    {% if request.form.get('country') %}
+                        Available in {{ request.form.get('country')|title }}
+                    {% endif %}
+                </div>
+            </div>
+            {% if request.form.get('ingredients') %}
+                <p class="text-gray-600 mt-2">
+                    For recipe with: <span class="font-medium">{{ request.form.get('ingredients') }}</span>
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Recommendations Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for product in recommendations %}
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">                            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                <a href="{{ url_for('product', product_code=product.code) }}" class="hover:text-primary-600 transition-colors">
+                                    {{ product.product_name or 'Unknown Product' }}
+                                </a>
+                            </h3>
+                            
+                            {% if product.brands %}
+                                <p class="text-sm text-gray-600 mb-2">
+                                    <i class="fas fa-tag mr-1"></i>{{ product.brands }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Nutri-Score -->
+                        {% if product.nutriscore_grade and product.nutriscore_grade != 'unknown' %}
+                            <div class="nutriscore-badge nutriscore-{{ product.nutriscore_grade.lower() }}">
+                                {{ product.nutriscore_grade.upper() }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Relevance Scores -->
+                    <div class="mb-4 space-y-2">
+                        {% if product.get('relevance_score') %}
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Overall Relevance:</span>
+                                <div class="flex items-center">
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-primary-600 h-2 rounded-full" style="width: '{{ (product.relevance_score * 100)|round }}%'"></div>
+                                    </div>
+                                    <span class="font-medium">{{ "%.1f"|format(product.relevance_score * 100) }}%</span>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if product.get('ingredient_match_score') %}
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Ingredient Match:</span>
+                                <div class="flex items-center">
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-success-600 h-2 rounded-full" style="width: '{{ (product.ingredient_match_score * 100)|round }}%'"></div>
+                                    </div>
+                                    <span class="font-medium">{{ "%.1f"|format(product.ingredient_match_score * 100) }}%</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Nutrition Summary -->
+                    {% if product.get('nutrition_info') %}
+                        <div class="border-t border-gray-100 pt-4 mb-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Nutrition (per 100g):</h4>
+                            <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                {% if product.nutrition_info.energy_100g %}
+                                    <div>Energy: {{ product.nutrition_info.energy_100g }}kJ</div>
+                                {% endif %}
+                                {% if product.nutrition_info.proteins_100g %}
+                                    <div>Protein: {{ product.nutrition_info.proteins_100g }}g</div>
+                                {% endif %}
+                                {% if product.nutrition_info.carbohydrates_100g %}
+                                    <div>Carbs: {{ product.nutrition_info.carbohydrates_100g }}g</div>
+                                {% endif %}
+                                {% if product.nutrition_info.fat_100g %}
+                                    <div>Fat: {{ product.nutrition_info.fat_100g }}g</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Categories -->
+                    {% if product.categories %}
+                        <div class="mb-4">
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-folder mr-1"></i>
+                                {{ product.categories[:80] }}{{ '...' if product.categories|length > 80 else '' }}
+                            </p>
+                        </div>
+                    {% endif %}                    <!-- Action Button -->
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">Code: {{ product.code }}</span>
+                        <a href="{{ url_for('product', product_code=product.code) }}" 
+                           class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+    {% elif request.method == 'POST' %}
+        <!-- No Results -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+            <i class="fas fa-search text-yellow-600 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
+            <p class="text-gray-600 mb-4">
+                We couldn't find products matching your recipe requirements. 
+                Try adjusting your ingredients or filters.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="window.location.reload()" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                    Try Different Ingredients
+                </button>
+                <a href="{{ url_for('search') }}" class="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    Browse All Products
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.nutriscore-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.nutriscore-a { background-color: #00B04F; }
+.nutriscore-b { background-color: #85BB2F; }
+.nutriscore-c { background-color: #FFCE00; color: #333; }
+.nutriscore-d { background-color: #FF6600; }
+.nutriscore-e { background-color: #FF0000; }
+
+.form-checkbox {
+    border-radius: 4px;
+    border: 2px solid #d1d5db;
+}
+
+.form-checkbox:checked {
+    background-color: currentColor;
+    border-color: currentColor;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Ingredient suggestions
+    const commonIngredients = [
+        'tomatoes', 'onions', 'garlic', 'basil', 'oregano', 'parsley', 'cheese', 'mozzarella',
+        'pasta', 'rice', 'chicken', 'beef', 'fish', 'eggs', 'milk', 'flour', 'sugar', 'salt',
+        'pepper', 'olive oil', 'butter', 'lemon', 'potatoes', 'carrots', 'bell peppers'
+    ];
+
+    // Simple ingredient autocomplete
+    const ingredientsInput = document.getElementById('ingredients');
+    
+    ingredientsInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        const words = value.split(',');
+        const currentWord = words[words.length - 1].trim();
+        
+        if (currentWord.length > 1) {
+            const suggestions = commonIngredients.filter(ingredient => 
+                ingredient.includes(currentWord) && !value.includes(ingredient)
+            );
+            
+            // In a real implementation, you'd show these suggestions in a dropdown
+            console.log('Suggestions:', suggestions.slice(0, 5));
+        }
+    });
+
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const ingredients = document.getElementById('ingredients').value.trim();
+        const country = document.getElementById('country').value;
+        
+        if (!ingredients) {
+            e.preventDefault();
+            alert('Please enter at least one ingredient.');
+            return;
+        }
+        
+        if (!country) {
+            e.preventDefault();
+            alert('Please select a country.');
+            return;
+        }
+    });
+
+    // Loading state
+    document.querySelector('form').addEventListener('submit', function() {
+        const button = this.querySelector('button[type="submit"]');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Searching...';
+        button.disabled = true;
+        
+        // Re-enable after 30 seconds as fallback
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 30000);
+    });
+</script>
+{% endblock %}

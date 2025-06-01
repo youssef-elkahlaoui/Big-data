@@ -1,0 +1,273 @@
+{% extends "base.html" %} {% block title %}About - Food Recommender System{%
+endblock %} {% block content %}
+<!-- Header Section -->
+<div class="bg-gradient-to-r from-primary-50 to-success-50 rounded-lg p-8 mb-8">
+  <div class="text-center">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">
+      <i class="fas fa-info-circle text-primary-600 mr-3"></i>
+      About the Food Recommender System
+    </h1>
+    <p class="text-xl text-gray-700 max-w-3xl mx-auto">
+      This project uses the Open Food Facts dataset to build an intelligent food
+      recommendation system powered by big data analytics and machine learning.
+    </p>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-8 mb-12">
+  <!-- Main Content -->
+  <div class="lg:col-span-2 space-y-8">
+    <!-- Project Overview -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-rocket text-primary-600 mr-3"></i>
+        Project Overview
+      </h2>
+      <div class="space-y-4 text-gray-700">
+        <p>
+          The Food Recommender System is designed to help users discover food
+          products that are similar to their favorites or find healthier
+          alternatives with better nutritional profiles.
+        </p>
+        <p>
+          The system leverages modern big data technologies including
+          <strong>Apache Spark</strong> for large-scale data processing and
+          <strong>MongoDB</strong> for scalable NoSQL storage, combined with
+          machine learning techniques to analyze a comprehensive dataset of food
+          products and provide personalized recommendations based on
+          ingredients, nutritional information, and food categories.
+        </p>
+      </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-star text-warning-500 mr-3"></i>
+        Key Features
+      </h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="flex items-start space-x-3 p-4 bg-primary-50 rounded-lg">
+          <i class="fas fa-layer-group text-primary-600 text-xl mt-1"></i>
+          <div>
+            <h4 class="font-bold text-gray-900">
+              Content-Based Recommendations
+            </h4>
+            <p class="text-gray-700 text-sm">
+              Find similar products based on ingredients and product
+              characteristics
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start space-x-3 p-4 bg-success-50 rounded-lg">
+          <i class="fas fa-heart text-success-600 text-xl mt-1"></i>
+          <div>
+            <h4 class="font-bold text-gray-900">Healthier Alternatives</h4>
+            <p class="text-gray-700 text-sm">
+              Discover products with better Nutriscore ratings but similar
+              ingredient profiles
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start space-x-3 p-4 bg-warning-50 rounded-lg">
+          <i class="fas fa-th-large text-warning-600 text-xl mt-1"></i>
+          <div>
+            <h4 class="font-bold text-gray-900">Category Search</h4>
+            <p class="text-gray-700 text-sm">
+              Browse products by category with filtering by nutritional quality
+            </p>
+          </div>
+        </div>
+        <div class="flex items-start space-x-3 p-4 bg-purple-50 rounded-lg">
+          <i class="fas fa-code text-purple-600 text-xl mt-1"></i>
+          <div>
+            <h4 class="font-bold text-gray-900">REST API</h4>
+            <p class="text-gray-700 text-sm">
+              Access recommendations programmatically through a REST API
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="lg:col-span-1">
+    <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
+      <div class="bg-primary-600 text-white p-4 rounded-lg mb-4">
+        <h4 class="text-lg font-bold mb-2 flex items-center">
+          <i class="fas fa-database mr-2"></i>
+          About Open Food Facts
+        </h4>
+      </div>
+      <div class="space-y-4 text-gray-700">
+        <p>
+          This project uses data from the
+          <a
+            href="https://world.openfoodfacts.org/"
+            target="_blank"
+            class="text-primary-600 hover:text-primary-800 font-medium underline"
+          >
+            Open Food Facts
+          </a>
+          database, a free, open, collaborative database of food products from
+          around the world.
+        </p>
+        <p>
+          Open Food Facts is a non-profit project developed by thousands of
+          volunteers from around the world.
+        </p>
+        <a
+          href="https://world.openfoodfacts.org/data"
+          target="_blank"
+          class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <i class="fas fa-external-link-alt mr-2"></i>
+          Learn more about the dataset
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Technical Implementation -->
+<div class="bg-white rounded-lg shadow-md p-6">
+  <h2 class="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+    <i class="fas fa-cogs text-primary-600 mr-3"></i>
+    Technical Implementation
+  </h2>
+
+  <div class="grid md:grid-cols-2 gap-8">
+    <!-- Data Pipeline -->
+    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6">
+      <h5 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-flow-chart text-blue-600 mr-2"></i>
+        Data Pipeline
+      </h5>
+      <ul class="space-y-3">
+        <li class="flex items-start space-x-3">
+          <i class="fas fa-download text-blue-600 mt-1"></i>
+          <div>
+            <strong class="text-gray-900">Data Ingestion</strong>
+            <p class="text-gray-700 text-sm">
+              Downloading and processing the OFF dataset using Spark for big
+              data handling
+            </p>
+          </div>
+        </li>
+        <li class="flex items-start space-x-3">
+          <i class="fas fa-broom text-blue-600 mt-1"></i>
+          <div>
+            <strong class="text-gray-900">Preprocessing</strong>
+            <p class="text-gray-700 text-sm">
+              Cleaning, normalization, and handling missing values with Spark
+              pipelines
+            </p>
+          </div>
+        </li>
+        <li class="flex items-start space-x-3">
+          <i class="fas fa-tools text-blue-600 mt-1"></i>
+          <div>
+            <strong class="text-gray-900">Feature Engineering</strong>
+            <p class="text-gray-700 text-sm">
+              TF-IDF vectorization for ingredients and one-hot encoding for
+              categories
+            </p>
+          </div>
+        </li>
+        <li class="flex items-start space-x-3">
+          <i class="fas fa-save text-blue-600 mt-1"></i>
+          <div>
+            <strong class="text-gray-900">Storage & Retrieval</strong>
+            <p class="text-gray-700 text-sm">
+              MongoDB for scalable NoSQL storage and efficient product queries
+            </p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Technologies Used -->
+    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6">
+      <h5 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-code-branch text-green-600 mr-2"></i>
+        Technologies Used
+      </h5>
+      <ul class="space-y-3">
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-database text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">MongoDB</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >NoSQL database for scalable data storage and retrieval</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-bolt text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">Apache Spark</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Big data processing and feature engineering</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fab fa-python text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">Python</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Core programming language</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-table text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">Pandas</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Data manipulation and analysis</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-brain text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">Scikit-learn</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Machine learning and text vectorization</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-flask text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">Flask</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Web application framework</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-paint-brush text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">Tailwind CSS</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Modern frontend design</span
+            >
+          </div>
+        </li>
+        <li class="flex items-center space-x-3">
+          <i class="fas fa-language text-green-600"></i>
+          <div>
+            <strong class="text-gray-900">NLTK</strong>
+            <span class="text-gray-600 text-sm ml-2"
+              >Natural language processing for text data</span
+            >
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,718 @@
+{% extends "base.html" %} {% block title %}Nutrition Comparison - Food
+Recommender System{% endblock %} {% block content %}
+<!-- Page Header -->
+<div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-8 mb-8">
+  <div class="text-center">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">
+      <i class="fas fa-balance-scale text-warning-600 mr-3"></i>
+      Nutrition Comparison
+    </h1>
+    <p class="text-xl text-gray-700 max-w-3xl mx-auto">
+      Compare nutritional values between different food products to make
+      informed choices
+    </p>
+  </div>
+</div>
+
+<!-- Product Selection -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+  <div class="border-b border-gray-200 pb-4 mb-6">
+    <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+      <i class="fas fa-search text-warning-600 mr-3"></i>
+      Select Products to Compare
+    </h2>
+    <p class="text-gray-600 mt-1">
+      Choose up to 4 products to compare their nutritional values
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- Product 1 -->
+    <div class="space-y-4">
+      <label
+        for="product1Search"
+        class="block text-sm font-medium text-gray-700"
+      >
+        Product 1
+      </label>
+      <div class="flex space-x-2">
+        <input
+          type="text"
+          id="product1Search"
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning-500 focus:border-warning-500"
+          placeholder="Search for first product..."
+          onkeyup="searchProducts(1, this.value)"
+        />
+        <button
+          type="button"
+          onclick="clearProduct(1)"
+          class="px-3 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="product1Results" class="space-y-2"></div>
+      <div
+        id="product1Selected"
+        class="hidden bg-green-50 border border-green-200 rounded-lg p-4"
+      >
+        <!-- Selected product will be shown here -->
+      </div>
+    </div>
+
+    <!-- Product 2 -->
+    <div class="space-y-4">
+      <label
+        for="product2Search"
+        class="block text-sm font-medium text-gray-700"
+      >
+        Product 2
+      </label>
+      <div class="flex space-x-2">
+        <input
+          type="text"
+          id="product2Search"
+          class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning-500 focus:border-warning-500"
+          placeholder="Search for second product..."
+          onkeyup="searchProducts(2, this.value)"
+        />
+        <button
+          type="button"
+          onclick="clearProduct(2)"
+          class="px-3 py-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="product2Results" class="space-y-2"></div>
+      <div
+        id="product2Selected"
+        class="hidden bg-green-50 border border-green-200 rounded-lg p-4"
+      >
+        <!-- Selected product will be shown here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Add More Products -->
+  <div class="mt-6 text-center">
+    <button
+      id="addProductBtn"
+      class="inline-flex items-center px-4 py-2 border border-primary-600 text-primary-600 bg-white rounded-lg hover:bg-primary-50 transition-colors"
+      onclick="addProductSlot()"
+    >
+      <i class="fas fa-plus mr-2"></i>Add Another Product (up to 4 total)
+    </button>
+  </div>
+
+  <div id="additionalProducts" class="grid md:grid-cols-2 gap-6 mt-6"></div>
+
+  <!-- Compare Button -->
+  <div class="text-center mt-8">
+    <button
+      id="compareBtn"
+      class="inline-flex items-center px-8 py-3 bg-warning-600 text-white font-medium rounded-lg hover:bg-warning-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      onclick="compareProducts()"
+      disabled
+    >
+      <i class="fas fa-chart-bar mr-2"></i>Compare Products
+    </button>
+  </div>
+</div>
+
+<!-- Comparison Results -->
+<div id="comparisonResults" class="hidden space-y-8">
+  <!-- Summary Cards -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+      <i class="fas fa-chart-line text-primary-600 mr-3"></i>Comparison Overview
+    </h3>
+    <div
+      id="summaryCards"
+      class="grid md:grid-cols-2 lg:grid-cols-4 gap-4"
+    ></div>
+  </div>
+
+  <!-- Detailed Nutrition Table -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+      <i class="fas fa-table text-success-600 mr-3"></i>Detailed Nutritional
+      Values
+    </h3>
+    <div class="overflow-x-auto">
+      <table id="nutritionTable" class="w-full border-collapse">
+        <thead>
+          <tr class="bg-gray-50">
+            <th
+              class="text-left py-3 px-4 font-semibold text-gray-900 border-b border-gray-200"
+            >
+              Nutrient
+            </th>
+            <!-- Product columns will be added dynamically -->
+          </tr>
+        </thead>
+        <tbody id="nutritionTableBody">
+          <!-- Nutrition data will be populated here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Nutrition Charts -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+      <i class="fas fa-chart-pie text-warning-600 mr-3"></i>Visual Comparison
+    </h3>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Macronutrients Chart -->
+      <div>
+        <h4 class="text-lg font-semibold text-gray-900 mb-4">
+          Macronutrients (per 100g)
+        </h4>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <canvas id="macroChart" width="400" height="300"></canvas>
+        </div>
+      </div>
+
+      <!-- Energy Comparison Chart -->
+      <div>
+        <h4 class="text-lg font-semibold text-gray-900 mb-4">Energy Content</h4>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <canvas id="energyChart" width="400" height="300"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Scores Comparison -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+      <i class="fas fa-star text-success-600 mr-3"></i>Health Scores
+    </h3>
+    <div id="healthScores" class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Health score cards will be populated here -->
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+    <h3 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+      <i class="fas fa-lightbulb text-primary-600 mr-3"></i>Nutritional Insights
+    </h3>
+    <div id="recommendations" class="space-y-4">
+      <!-- Recommendations will be populated here -->
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  let selectedProducts = {};
+  let productCount = 2;
+  let searchTimeout = null;
+
+  async function searchProducts(slot, query) {
+    if (searchTimeout) clearTimeout(searchTimeout);
+
+    if (query.length < 2) {
+      document.getElementById(`product${slot}Results`).innerHTML = "";
+      return;
+    }
+
+    searchTimeout = setTimeout(async () => {
+      try {
+        // Simulate API call - replace with actual endpoint
+        const mockResults = [
+          {
+            id: `${query}1`,
+            product_name: `${query} Product 1`,
+            brands: "Brand A",
+            nutriscore_grade: "A",
+            energy_100g: 250,
+            proteins_100g: 12,
+            carbohydrates_100g: 30,
+            fat_100g: 8,
+          },
+          {
+            id: `${query}2`,
+            product_name: `${query} Product 2`,
+            brands: "Brand B",
+            nutriscore_grade: "B",
+            energy_100g: 180,
+            proteins_100g: 8,
+            carbohydrates_100g: 25,
+            fat_100g: 5,
+          },
+        ];
+
+        displaySearchResults(slot, mockResults);
+      } catch (error) {
+        console.error("Search error:", error);
+      }
+    }, 300);
+  }
+
+  function displaySearchResults(slot, results) {
+    const resultsDiv = document.getElementById(`product${slot}Results`);
+
+    if (results.length === 0) {
+      resultsDiv.innerHTML =
+        '<p class="text-gray-500 text-sm">No products found</p>';
+      return;
+    }
+
+    let html = "";
+    results.forEach((product) => {
+      const nutriScore = product.nutriscore_grade || "N/A";
+      const scoreColor = getNutriScoreColor(nutriScore);
+
+      html += `
+            <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                 onclick="selectProduct(${slot}, ${JSON.stringify(
+        product
+      ).replace(/"/g, "&quot;")})">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="font-medium text-gray-900">${
+                          product.product_name
+                        }</h4>
+                        <p class="text-sm text-gray-600">${
+                          product.brands || "Unknown brand"
+                        }</p>
+                    </div>
+                    <span class="inline-flex items-center justify-center w-8 h-8 bg-${scoreColor}-500 text-white font-bold rounded-full text-sm">
+                        ${nutriScore}
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+
+    resultsDiv.innerHTML = html;
+  }
+
+  function selectProduct(slot, product) {
+    selectedProducts[slot] = product;
+
+    // Hide search results
+    document.getElementById(`product${slot}Results`).innerHTML = "";
+    document.getElementById(`product${slot}Search`).value = "";
+
+    // Show selected product
+    const selectedDiv = document.getElementById(`product${slot}Selected`);
+    const nutriScore = product.nutriscore_grade || "N/A";
+    const scoreColor = getNutriScoreColor(nutriScore);
+
+    selectedDiv.innerHTML = `
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <h4 class="font-bold text-gray-900">${product.product_name}</h4>
+                <p class="text-gray-600">${
+                  product.brands || "Unknown brand"
+                }</p>
+                <div class="mt-2 flex items-center space-x-4 text-sm">
+                    <span class="text-gray-600">Energy: ${
+                      product.energy_100g || "N/A"
+                    } kJ</span>
+                    <span class="text-gray-600">Protein: ${
+                      product.proteins_100g || "N/A"
+                    }g</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center justify-center w-8 h-8 bg-${scoreColor}-500 text-white font-bold rounded-full text-sm">
+                    ${nutriScore}
+                </span>
+                <button onclick="clearProduct(${slot})" 
+                        class="text-red-600 hover:text-red-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    selectedDiv.classList.remove("hidden");
+
+    updateCompareButton();
+  }
+
+  function clearProduct(slot) {
+    delete selectedProducts[slot];
+    document.getElementById(`product${slot}Selected`).classList.add("hidden");
+    document.getElementById(`product${slot}Search`).value = "";
+    document.getElementById(`product${slot}Results`).innerHTML = "";
+    updateCompareButton();
+  }
+
+  function addProductSlot() {
+    if (productCount >= 4) return;
+
+    productCount++;
+    const additionalProductsDiv = document.getElementById("additionalProducts");
+
+    const newSlotHtml = `
+        <div class="space-y-4" id="productSlot${productCount}">
+            <label for="product${productCount}Search" class="block text-sm font-medium text-gray-700">
+                Product ${productCount}
+            </label>
+            <div class="flex space-x-2">
+                <input type="text" 
+                       id="product${productCount}Search" 
+                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning-500 focus:border-warning-500" 
+                       placeholder="Search for product ${productCount}..." 
+                       onkeyup="searchProducts(${productCount}, this.value)">
+                <button type="button" 
+                        onclick="removeProductSlot(${productCount})"
+                        class="px-3 py-2 bg-red-200 text-red-600 rounded-lg hover:bg-red-300 transition-colors">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div id="product${productCount}Results" class="space-y-2"></div>
+            <div id="product${productCount}Selected" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+                <!-- Selected product will be shown here -->
+            </div>
+        </div>
+    `;
+
+    additionalProductsDiv.insertAdjacentHTML("beforeend", newSlotHtml);
+
+    if (productCount >= 4) {
+      document.getElementById("addProductBtn").style.display = "none";
+    }
+  }
+
+  function removeProductSlot(slot) {
+    clearProduct(slot);
+    document.getElementById(`productSlot${slot}`).remove();
+
+    // Show add button if we're under the limit
+    if (productCount <= 4) {
+      document.getElementById("addProductBtn").style.display = "inline-flex";
+    }
+  }
+
+  function updateCompareButton() {
+    const compareBtn = document.getElementById("compareBtn");
+    const selectedCount = Object.keys(selectedProducts).length;
+
+    if (selectedCount >= 2) {
+      compareBtn.disabled = false;
+      compareBtn.innerHTML = `<i class="fas fa-chart-bar mr-2"></i>Compare ${selectedCount} Products`;
+    } else {
+      compareBtn.disabled = true;
+      compareBtn.innerHTML =
+        '<i class="fas fa-chart-bar mr-2"></i>Select at least 2 products to compare';
+    }
+  }
+
+  function compareProducts() {
+    const products = Object.values(selectedProducts);
+    if (products.length < 2) return;
+
+    // Show results section
+    document.getElementById("comparisonResults").classList.remove("hidden");
+
+    // Generate summary cards
+    generateSummaryCards(products);
+
+    // Generate nutrition table
+    generateNutritionTable(products);
+
+    // Generate charts
+    generateCharts(products);
+
+    // Generate health scores
+    generateHealthScores(products);
+
+    // Generate recommendations
+    generateRecommendations(products);
+
+    // Scroll to results
+    document
+      .getElementById("comparisonResults")
+      .scrollIntoView({ behavior: "smooth" });
+  }
+
+  function generateSummaryCards(products) {
+    const summaryDiv = document.getElementById("summaryCards");
+    let html = "";
+
+    products.forEach((product) => {
+      const nutriScore = product.nutriscore_grade || "N/A";
+      const scoreColor = getNutriScoreColor(nutriScore);
+
+      html += `
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4">
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="font-bold text-gray-900 text-sm">${
+                      product.product_name
+                    }</h4>
+                    <span class="inline-flex items-center justify-center w-6 h-6 bg-${scoreColor}-500 text-white font-bold rounded-full text-xs">
+                        ${nutriScore}
+                    </span>
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Energy:</span>
+                        <span class="font-medium">${
+                          product.energy_100g || "N/A"
+                        } kJ</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Protein:</span>
+                        <span class="font-medium">${
+                          product.proteins_100g || "N/A"
+                        }g</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Carbs:</span>
+                        <span class="font-medium">${
+                          product.carbohydrates_100g || "N/A"
+                        }g</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Fat:</span>
+                        <span class="font-medium">${
+                          product.fat_100g || "N/A"
+                        }g</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    summaryDiv.innerHTML = html;
+  }
+
+  function generateNutritionTable(products) {
+    const table = document.getElementById("nutritionTable");
+    const tbody = document.getElementById("nutritionTableBody");
+
+    // Update table header
+    let headerHtml =
+      '<th class="text-left py-3 px-4 font-semibold text-gray-900 border-b border-gray-200">Nutrient</th>';
+    products.forEach((product) => {
+      headerHtml += `<th class="text-center py-3 px-4 font-semibold text-gray-900 border-b border-gray-200">${product.product_name}</th>`;
+    });
+    table.querySelector("thead tr").innerHTML = headerHtml;
+
+    // Nutrition facts to compare
+    const nutrients = [
+      { key: "energy_100g", label: "Energy (kJ)", unit: "kJ" },
+      { key: "proteins_100g", label: "Protein", unit: "g" },
+      { key: "carbohydrates_100g", label: "Carbohydrates", unit: "g" },
+      { key: "fat_100g", label: "Total Fat", unit: "g" },
+      { key: "saturated_fat_100g", label: "Saturated Fat", unit: "g" },
+      { key: "sugars_100g", label: "Sugars", unit: "g" },
+      { key: "fiber_100g", label: "Fiber", unit: "g" },
+      { key: "salt_100g", label: "Salt", unit: "g" },
+      { key: "sodium_100g", label: "Sodium", unit: "mg" },
+    ];
+
+    let tbodyHtml = "";
+    nutrients.forEach((nutrient, index) => {
+      const bgClass = index % 2 === 0 ? "bg-white" : "bg-gray-50";
+      let rowHtml = `<tr class="${bgClass}">`;
+      rowHtml += `<td class="py-3 px-4 font-medium text-gray-900 border-b border-gray-100">${nutrient.label}</td>`;
+
+      products.forEach((product) => {
+        const value = product[nutrient.key];
+        const displayValue =
+          value !== undefined && value !== null
+            ? `${value} ${nutrient.unit}`
+            : "N/A";
+        rowHtml += `<td class="py-3 px-4 text-center text-gray-700 border-b border-gray-100">${displayValue}</td>`;
+      });
+
+      rowHtml += "</tr>";
+      tbodyHtml += rowHtml;
+    });
+
+    tbody.innerHTML = tbodyHtml;
+  }
+
+  function generateCharts(products) {
+    // Macronutrients Chart
+    const macroCtx = document.getElementById("macroChart").getContext("2d");
+    const macroData = {
+      labels: products.map((p) => p.product_name),
+      datasets: [
+        {
+          label: "Protein (g)",
+          data: products.map((p) => p.proteins_100g || 0),
+          backgroundColor: "rgba(59, 130, 246, 0.8)",
+          borderColor: "rgb(59, 130, 246)",
+          borderWidth: 1,
+        },
+        {
+          label: "Carbohydrates (g)",
+          data: products.map((p) => p.carbohydrates_100g || 0),
+          backgroundColor: "rgba(16, 185, 129, 0.8)",
+          borderColor: "rgb(16, 185, 129)",
+          borderWidth: 1,
+        },
+        {
+          label: "Fat (g)",
+          data: products.map((p) => p.fat_100g || 0),
+          backgroundColor: "rgba(245, 158, 11, 0.8)",
+          borderColor: "rgb(245, 158, 11)",
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    new Chart(macroCtx, {
+      type: "bar",
+      data: macroData,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: "Grams per 100g",
+            },
+          },
+        },
+      },
+    });
+
+    // Energy Chart
+    const energyCtx = document.getElementById("energyChart").getContext("2d");
+    const energyData = {
+      labels: products.map((p) => p.product_name),
+      datasets: [
+        {
+          label: "Energy (kJ)",
+          data: products.map((p) => p.energy_100g || 0),
+          backgroundColor: products.map(
+            (_, i) => `hsla(${i * 60}, 70%, 60%, 0.8)`
+          ),
+          borderColor: products.map((_, i) => `hsl(${i * 60}, 70%, 50%)`),
+          borderWidth: 2,
+        },
+      ],
+    };
+
+    new Chart(energyCtx, {
+      type: "doughnut",
+      data: energyData,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    });
+  }
+
+  function generateHealthScores(products) {
+    const healthDiv = document.getElementById("healthScores");
+    let html = "";
+
+    products.forEach((product) => {
+      const nutriScore = product.nutriscore_grade || "N/A";
+      const scoreColor = getNutriScoreColor(nutriScore);
+
+      html += `
+            <div class="bg-white border border-gray-200 rounded-lg p-4 text-center">
+                <h4 class="font-bold text-gray-900 mb-2">${product.product_name}</h4>
+                <div class="mb-3">
+                    <span class="inline-flex items-center justify-center w-12 h-12 bg-${scoreColor}-500 text-white font-bold rounded-full text-lg">
+                        ${nutriScore}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-600">Nutri-Score Rating</p>
+            </div>
+        `;
+    });
+
+    healthDiv.innerHTML = html;
+  }
+
+  function generateRecommendations(products) {
+    const recommendDiv = document.getElementById("recommendations");
+
+    // Find best and worst products based on energy content
+    const sortedByEnergy = products.sort(
+      (a, b) => (a.energy_100g || 0) - (b.energy_100g || 0)
+    );
+    const lowestEnergy = sortedByEnergy[0];
+    const highestEnergy = sortedByEnergy[sortedByEnergy.length - 1];
+
+    // Find highest protein
+    const sortedByProtein = products.sort(
+      (a, b) => (b.proteins_100g || 0) - (a.proteins_100g || 0)
+    );
+    const highestProtein = sortedByProtein[0];
+
+    let html = `
+        <div class="grid md:grid-cols-3 gap-4">
+            <div class="bg-green-100 border border-green-200 rounded-lg p-4">
+                <h4 class="font-bold text-green-800 mb-2">
+                    <i class="fas fa-leaf mr-1"></i>Lowest Energy
+                </h4>
+                <p class="text-green-700 text-sm">
+                    <strong>${
+                      lowestEnergy.product_name
+                    }</strong> has the lowest energy content at ${
+      lowestEnergy.energy_100g || "N/A"
+    } kJ per 100g.
+                </p>
+            </div>
+            
+            <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
+                <h4 class="font-bold text-blue-800 mb-2">
+                    <i class="fas fa-dumbbell mr-1"></i>Highest Protein
+                </h4>
+                <p class="text-blue-700 text-sm">
+                    <strong>${
+                      highestProtein.product_name
+                    }</strong> provides the most protein with ${
+      highestProtein.proteins_100g || "N/A"
+    }g per 100g.
+                </p>
+            </div>
+            
+            <div class="bg-yellow-100 border border-yellow-200 rounded-lg p-4">
+                <h4 class="font-bold text-yellow-800 mb-2">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Highest Energy
+                </h4>
+                <p class="text-yellow-700 text-sm">
+                    <strong>${
+                      highestEnergy.product_name
+                    }</strong> has the highest energy content at ${
+      highestEnergy.energy_100g || "N/A"
+    } kJ per 100g.
+                </p>
+            </div>
+        </div>
+    `;
+
+    recommendDiv.innerHTML = html;
+  }
+
+  function getNutriScoreColor(score) {
+    const colors = {
+      A: "green",
+      B: "lime",
+      C: "yellow",
+      D: "orange",
+      E: "red",
+    };
+    return colors[score] || "gray";
+  }
+
+  // Initialize the page
+  document.addEventListener("DOMContentLoaded", function () {
+    updateCompareButton();
+  });
+</script>
+{% endblock %}

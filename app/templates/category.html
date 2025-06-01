@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Food Recommender{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">Browse by Category</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto">
+            Explore our extensive collection of food products organized by categories. 
+            Find exactly what you're looking for with our smart filtering system.
+        </p>
+    </div>
+
+    <!-- Search Categories Form -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+        <div class="flex items-center mb-6">
+            <i class="fas fa-search text-primary-600 text-xl mr-3"></i>
+            <h2 class="text-xl font-semibold text-gray-900">Search Categories</h2>
+        </div>
+        
+        <form action="{{ url_for('category_search') }}" method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Category Input -->
+                <div class="md:col-span-6">
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-folder mr-2"></i>Category
+                    </label>
+                    <input type="text" 
+                           id="category" 
+                           name="category" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                           placeholder="E.g., cereals, chocolate, yogurt, pasta" 
+                           value="{{ category|default('') }}">
+                </div>
+                
+                <!-- Nutriscore Filter -->
+                <div class="md:col-span-4">
+                    <label for="nutriscore" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-heart mr-2"></i>Minimum Nutri-Score
+                    </label>
+                    <select id="nutriscore" 
+                            name="nutriscore" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                        <option value="">Any Score</option>
+                        <option value="a" {% if nutriscore == 'a' %}selected{% endif %}>A (Excellent)</option>
+                        <option value="b" {% if nutriscore == 'b' %}selected{% endif %}>B (Good)</option>
+                        <option value="c" {% if nutriscore == 'c' %}selected{% endif %}>C (Average)</option>
+                        <option value="d" {% if nutriscore == 'd' %}selected{% endif %}>D (Poor)</option>
+                        <option value="e" {% if nutriscore == 'e' %}selected{% endif %}>E (Bad)</option>
+                    </select>
+                </div>
+                
+                <!-- Search Button -->
+                <div class="md:col-span-2 flex items-end">
+                    <button type="submit" 
+                            class="w-full bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i>
+                        Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    {% if error %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mr-3"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+                    <p class="text-yellow-700 mt-1">{{ error }}</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Products Results -->
+    {% if products %}
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        Products in "{{ category }}" Category
+                    </h2>
+                    {% if nutriscore %}
+                        <p class="text-gray-600 mt-1">
+                            <i class="fas fa-filter mr-2"></i>
+                            Filtered by Nutri-Score {{ nutriscore|upper }} or better
+                        </p>
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-600">
+                    {{ products|length }} products found
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for product in products %}
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow h-full flex flex-col">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 leading-tight flex-1 mr-3">
+                                    {{ product.product_name or 'Unknown Product' }}
+                                </h3>
+                                
+                                <!-- Nutri-Score Badge -->
+                                {% if product.nutriscore_grade and product.nutriscore_grade != 'unknown' %}
+                                    <div class="nutriscore-badge nutriscore-{{ product.nutriscore_grade.lower() }}">
+                                        {{ product.nutriscore_grade.upper() }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if product.brands %}
+                                <p class="text-sm text-gray-600 mb-3">
+                                    <i class="fas fa-tag mr-1"></i>{{ product.brands }}
+                                </p>
+                            {% endif %}
+                            
+                            {% if product.categories %}
+                                <p class="text-xs text-gray-500 mb-4 line-clamp-2">
+                                    <i class="fas fa-folder mr-1"></i>
+                                    {{ product.categories }}
+                                </p>
+                            {% endif %}
+                        </div>
+                          <!-- Action Button -->
+                        <div class="pt-4 border-t border-gray-100">
+                            <a href="{{ url_for('product_detail', product_code=product.code) }}" 
+                               class="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium text-center block">
+                                <i class="fas fa-eye mr-2"></i>View Details
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+    {% elif not categories %}
+        <!-- No Search Performed -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center">
+            <i class="fas fa-info-circle text-blue-600 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Ready to Search</h3>
+            <p class="text-gray-600">
+                Enter a category name above to discover products in that category.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Popular Categories -->
+    {% if categories and not category %}
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+                <i class="fas fa-star text-yellow-500 mr-2"></i>
+                Popular Categories
+            </h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for category in categories %}
+                    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:scale-105 text-center group">
+                        <div class="mb-4">
+                            <i class="fas fa-utensils text-primary-600 text-2xl group-hover:text-primary-700 transition-colors"></i>
+                        </div>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-4 line-clamp-2">
+                            {{ category }}
+                        </h3>
+                        <a href="{{ url_for('category_search', category=category) }}" 
+                           class="inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-primary-600 hover:text-white transition-all text-sm font-medium">
+                            <i class="fas fa-arrow-right mr-1"></i>
+                            Browse
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.nutriscore-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.nutriscore-a { background-color: #00B04F; }
+.nutriscore-b { background-color: #85BB2F; }
+.nutriscore-c { background-color: #FFCE00; color: #333; }
+.nutriscore-d { background-color: #FF6600; }
+.nutriscore-e { background-color: #FF0000; }
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Category suggestions
+    const popularCategories = [
+        'breakfast cereals', 'chocolate', 'yogurt', 'pasta', 'bread', 'cheese',
+        'milk', 'cookies', 'snacks', 'beverages', 'fruits', 'vegetables',
+        'meat', 'fish', 'desserts', 'spreads', 'sauces', 'oils'
+    ];
+
+    // Simple autocomplete for category input
+    const categoryInput = document.getElementById('category');
+    
+    categoryInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        
+        if (value.length > 1) {
+            const suggestions = popularCategories.filter(category => 
+                category.includes(value)
+            );
+            
+            // In a real implementation, you'd show these suggestions in a dropdown
+            console.log('Category suggestions:', suggestions.slice(0, 5));
+        }
+    });
+
+    // Form submission with loading state
+    document.querySelector('form').addEventListener('submit', function() {
+        const button = this.querySelector('button[type="submit"]');
+        const originalContent = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Searching...';
+        button.disabled = true;
+        
+        // Re-enable after 30 seconds as fallback
+        setTimeout(() => {
+            button.innerHTML = originalContent;
+            button.disabled = false;
+        }, 30000);
+    });
+
+    // Enhanced category cards hover effects
+    document.querySelectorAll('.group').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>

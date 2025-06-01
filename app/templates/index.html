@@ -1,0 +1,259 @@
+{% extends "base.html" %} {% block title %}Home - Food Recommender{% endblock %}
+{% block content %}
+<!-- Error Display -->
+{% if data_info and data_info.error %}
+<div
+  class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6"
+>
+  <div class="flex items-center">
+    <i class="fas fa-exclamation-triangle mr-2"></i>
+    <div><strong>System Status:</strong> {{ data_info.error }}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- System Status Display -->
+<!-- {% if recommender_status %}
+<div
+  class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6"
+>
+  <div class="flex items-center">
+    <i class="fas fa-info-circle mr-2"></i>
+    <div><strong>Recommender Status:</strong> {{ recommender_status }}</div>
+  </div>
+</div>
+{% endif %} -->
+
+<!-- Hero Section -->
+<div class="bg-gradient-to-br from-primary-50 to-blue-100 rounded-2xl p-8 mb-8">
+  <div class="text-center">
+    <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+      Smart Food Recommendations
+    </h1>
+    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+      Discover the perfect food products for your recipes with AI-powered
+      recommendations based on nutrition, sustainability, and your dietary
+      preferences.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a
+        href="{{ url_for('recipe_recommendations') }}"
+        class="bg-primary-600 text-white px-8 py-4 rounded-lg hover:bg-primary-700 transition-colors font-semibold inline-flex items-center justify-center"
+      >
+        <i class="fas fa-magic mr-2"></i>
+        Get Recipe Recommendations
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex items-center">
+      <div class="bg-primary-100 p-3 rounded-lg">
+        <i class="fas fa-database text-primary-600 text-xl"></i>
+      </div>
+      <div class="ml-4">
+        <h3 class="text-2xl font-bold text-gray-900">300K+</h3>
+        <p class="text-gray-600">Food Products</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex items-center">
+      <div class="bg-success-100 p-3 rounded-lg">
+        <i class="fas fa-leaf text-success-600 text-xl"></i>
+      </div>
+      <div class="ml-4">
+        <h3 class="text-2xl font-bold text-gray-900">Smart</h3>
+        <p class="text-gray-600">Sustainability Insights</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+    <div class="flex items-center">
+      <div class="bg-warning-100 p-3 rounded-lg">
+        <i class="fas fa-heart text-warning-600 text-xl"></i>
+      </div>
+      <div class="ml-4">
+        <h3 class="text-2xl font-bold text-gray-900">Health</h3>
+        <p class="text-gray-600">Nutrition Analysis</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Search -->
+<div class="bg-white rounded-xl p-8 shadow-sm border border-gray-100 mb-8">
+  <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">
+    Quick Product Search
+  </h2>
+
+  <form action="{{ url_for('search') }}" method="GET" class="max-w-2xl mx-auto">
+    <div class="flex flex-col sm:flex-row gap-4">
+      <div class="flex-1">
+        <input
+          type="text"
+          name="query"
+          placeholder="Search for products (e.g., 'organic pasta', 'gluten-free bread')"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+          value="{{ request.args.get('query', '') }}"
+        />
+      </div>
+      <button
+        type="submit"
+        class="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+      >
+        <i class="fas fa-search mr-2"></i>Search
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Features Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+  <!-- Recipe Recommendations -->
+  <div
+    class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="text-center">
+      <div
+        class="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <i class="fas fa-clipboard-list text-primary-600 text-2xl"></i>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-3">
+        Recipe Recommendations
+      </h3>
+      <p class="text-gray-600 mb-4">
+        Get personalized product recommendations based on your recipe
+        ingredients and dietary preferences.
+      </p>
+      <a
+        href="{{ url_for('recipe_recommendations') }}"
+        class="text-primary-600 hover:text-primary-700 font-semibold inline-flex items-center"
+      >
+        Try Recipe Match <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Advanced Search -->
+  <div
+    class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="text-center">
+      <div
+        class="bg-success-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <i class="fas fa-filter text-success-600 text-2xl"></i>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-3">
+        Advanced Filtering
+      </h3>
+      <p class="text-gray-600 mb-4">
+        Filter products by nutrition score, allergens, dietary restrictions, and
+        sustainability criteria.
+      </p>
+      <a
+        href="{{ url_for('advanced_search') }}"
+        class="text-success-600 hover:text-success-700 font-semibold inline-flex items-center"
+      >
+        Advanced Search <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Sustainability -->
+  <div
+    class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+  >
+    <div class="text-center">
+      <div
+        class="bg-warning-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <i class="fas fa-leaf text-warning-600 text-2xl"></i>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-900 mb-3">
+        Sustainability Insights
+      </h3>
+      <p class="text-gray-600 mb-4">
+        Discover eco-friendly products and understand the environmental impact
+        of your food choices.
+      </p>
+      <a
+        href="{{ url_for('sustainability_insights') }}"
+        class="text-warning-600 hover:text-warning-700 font-semibold inline-flex items-center"
+      >
+        View Insights <i class="fas fa-arrow-right ml-1"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- How It Works -->
+<div class="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+  <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">
+    How It Works
+  </h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="text-center">
+      <div
+        class="bg-primary-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <span class="text-primary-600 font-bold text-xl">1</span>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">
+        Enter Your Requirements
+      </h3>
+      <p class="text-gray-600">
+        Specify your recipe ingredients, dietary restrictions, and preferences.
+      </p>
+    </div>
+
+    <div class="text-center">
+      <div
+        class="bg-success-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <span class="text-success-600 font-bold text-xl">2</span>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">AI Analysis</h3>
+      <p class="text-gray-600">
+        Our machine learning algorithms analyze nutrition, sustainability, and
+        compatibility.
+      </p>
+    </div>
+
+    <div class="text-center">
+      <div
+        class="bg-warning-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <span class="text-warning-600 font-bold text-xl">3</span>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">
+        Get Recommendations
+      </h3>
+      <p class="text-gray-600">
+        Receive personalized product recommendations with detailed insights.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // Add some interactivity to the features cards
+  document.querySelectorAll(".feature-card").forEach((card) => {
+    card.addEventListener("mouseenter", function () {
+      this.style.transform = "translateY(-4px)";
+    });
+
+    card.addEventListener("mouseleave", function () {
+      this.style.transform = "translateY(0)";
+    });
+  });
+</script>
+{% endblock %}

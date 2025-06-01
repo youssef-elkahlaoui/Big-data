@@ -1,0 +1,73 @@
+{% extends "base.html" %} {% block title %}Error - Food Recommender System{%
+endblock %} {% block content %}
+<div class="max-w-2xl mx-auto text-center py-12">
+  <!-- Error Icon -->
+  <div class="mb-8">
+    <div
+      class="w-24 h-24 bg-danger-100 rounded-full flex items-center justify-center mx-auto mb-6"
+    >
+      <i class="fas fa-exclamation-triangle text-danger-600 text-4xl"></i>
+    </div>
+
+    <!-- Error Card -->
+    <div class="bg-white rounded-lg shadow-lg border-l-4 border-danger-500 p-8">
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+          Oops! Something went wrong
+        </h1>
+        <div class="w-16 h-1 bg-danger-500 mx-auto rounded-full"></div>
+      </div>
+
+      <div class="mb-8">
+        <p class="text-lg text-gray-700 leading-relaxed">
+          {{ error if error else "We encountered an unexpected error while
+          processing your request." }}
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a
+          href="{{ url_for('index') }}"
+          class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <i class="fas fa-home mr-2"></i>
+          Return to Home
+        </a>
+        <button
+          onclick="history.back()"
+          class="inline-flex items-center px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          <i class="fas fa-arrow-left mr-2"></i>
+          Go Back
+        </button>
+      </div>
+    </div>
+
+    <!-- Help Links -->
+    <div class="mt-8 space-y-4">
+      <p class="text-gray-600">Need help? Try these options:</p>
+      <div class="flex flex-wrap justify-center gap-4 text-sm">
+        <a
+          href="{{ url_for('search') }}"
+          class="text-primary-600 hover:text-primary-800 underline"
+        >
+          <i class="fas fa-search mr-1"></i>Search Products
+        </a>
+        <a
+          href="{{ url_for('search') }}"
+          class="text-primary-600 hover:text-primary-800 underline"
+        >
+          <i class="fas fa-search mr-1"></i>Search Products
+        </a>
+        <a
+          href="{{ url_for('about') }}"
+          class="text-primary-600 hover:text-primary-800 underline"
+        >
+          <i class="fas fa-info-circle mr-1"></i>About Us
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

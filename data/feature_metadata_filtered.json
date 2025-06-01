@@ -1,0 +1,43 @@
+{
+  "total_features": 27,
+  "total_records": 302935,
+  "feature_list": [
+    "code",
+    "product_name",
+    "brands",
+    "main_category",
+    "ingredients_text",
+    "ingredients_filtered",
+    "nutriscore_grade",
+    "energy_100g",
+    "proteins_100g",
+    "carbohydrates_100g",
+    "fat_100g",
+    "sugars_100g",
+    "salt_100g",
+    "packaging",
+    "image_url",
+    "content_text",
+    "content_filtered",
+    "contains_gluten",
+    "contains_milk",
+    "contains_eggs",
+    "contains_nuts",
+    "contains_peanuts",
+    "contains_soy",
+    "contains_fish",
+    "contains_shellfish",
+    "contains_sesame",
+    "healthy_score"
+  ],
+  "processing_date": "2025-05-26T22:06:15.804144",
+  "target_countries": [
+    "morocco",
+    "egypt",
+    "spain",
+    "france",
+    "united-states"
+  ],
+  "dataset_type": "filtered",
+  "note": "Engineered features for products from Morocco, Spain, and Egypt only"
+}

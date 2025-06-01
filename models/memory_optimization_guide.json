@@ -1,0 +1,16 @@
+{
+  "memory_usage_tips": [
+    "Use streaming recommendations for large queries",
+    "Process data in batches to avoid memory overflow",
+    "Use sample-based analysis for large datasets",
+    "Clear intermediate variables with gc.collect()",
+    "Use efficient Spark persistence levels",
+    "Limit vocabulary size in TF-IDF vectorization"
+  ],
+  "performance_settings": {
+    "max_products_in_memory": 5000,
+    "recommended_batch_size": 1000,
+    "optimal_partitions": "dataset_size / 10000",
+    "vocabulary_limit": 2000
+  }
+}

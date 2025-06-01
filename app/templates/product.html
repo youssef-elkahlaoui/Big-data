@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.product_name }} - Food Recommender System{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav class="flex mb-6" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{{ url_for('index') }}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600">
+                <i class="fas fa-home mr-2"></i>
+                Home
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <a href="{{ url_for('search') }}" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ml-2">
+                    <i class="fas fa-search mr-1"></i>
+                    Search
+                </a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ product.product_name }}</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+
+<!-- Product Header -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div class="grid lg:grid-cols-2 gap-8">
+        <!-- Product Image -->
+        <div class="flex justify-center lg:justify-start">
+            {% if product.image_url %}
+                <img src="{{ product.image_url }}" alt="{{ product.product_name }}" 
+                     class="w-full max-w-md h-auto rounded-lg shadow-md object-cover">
+            {% else %}
+                <div class="w-full max-w-md h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <i class="fas fa-image text-6xl mb-4"></i>
+                        <p class="text-lg">No image available</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Info -->
+        <div class="space-y-6">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ product.product_name }}</h1>
+                {% if product.brands %}
+                    <p class="text-xl text-gray-600 mb-4">{{ product.brands }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Product Scores -->
+            <div class="flex flex-wrap gap-4">
+                {% if product.nutriscore_grade %}
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-700">Nutri-Score:</span>
+                        <span class="inline-flex items-center justify-center w-8 h-8 text-white font-bold rounded-full
+                            {% if product.nutriscore_grade.lower() == 'a' %}bg-green-500
+                            {% elif product.nutriscore_grade.lower() == 'b' %}bg-lime-500
+                            {% elif product.nutriscore_grade.lower() == 'c' %}bg-yellow-500
+                            {% elif product.nutriscore_grade.lower() == 'd' %}bg-orange-500
+                            {% else %}bg-red-500{% endif %}">
+                            {{ product.nutriscore_grade }}
+                        </span>
+                    </div>
+                {% endif %}
+
+                {% if product.ecoscore_grade %}
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-700">Eco-Score:</span>
+                        <span class="inline-flex items-center justify-center w-8 h-8 text-white font-bold rounded-full
+                            {% if product.ecoscore_grade.lower() == 'a' %}bg-green-500
+                            {% elif product.ecoscore_grade.lower() == 'b' %}bg-lime-500
+                            {% elif product.ecoscore_grade.lower() == 'c' %}bg-yellow-500
+                            {% elif product.ecoscore_grade.lower() == 'd' %}bg-orange-500
+                            {% else %}bg-red-500{% endif %}">
+                            {{ product.ecoscore_grade }}
+                        </span>
+                    </div>
+                {% endif %}
+
+                {% if product.nutrition_score_fr %}
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-700">Nutrition Score:</span>
+                        <span class="px-3 py-1 bg-gray-100 text-gray-800 font-medium rounded-full">
+                            {{ product.nutrition_score_fr }}/100
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Info -->
+            <div class="grid md:grid-cols-2 gap-4">
+                {% if product.quantity %}
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-weight text-primary-600"></i>
+                        <span class="text-sm"><strong>Quantity:</strong> {{ product.quantity }}</span>
+                    </div>
+                {% endif %}
+
+                {% if product.countries %}
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-map-marker-alt text-primary-600"></i>
+                        <span class="text-sm"><strong>Origin:</strong> {{ product.countries }}</span>
+                    </div>
+                {% endif %}
+
+                {% if product.manufacturing_places %}
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-industry text-primary-600"></i>
+                        <span class="text-sm"><strong>Manufacturing:</strong> {{ product.manufacturing_places }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+                <button onclick="getRecommendations('{{ product.code }}')" 
+                        class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-magic mr-2"></i>
+                    Get Similar Products
+                </button>
+                <button onclick="addToComparison('{{ product.code }}', '{{ product.product_name }}')" 
+                        class="inline-flex items-center px-6 py-3 border border-primary-600 text-primary-600 font-medium rounded-lg hover:bg-primary-50 transition-colors">
+                    <i class="fas fa-balance-scale mr-2"></i>
+                    Add to Comparison
+                </button>
+                <button onclick="shareProduct()" 
+                        class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-share mr-2"></i>
+                    Share
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Details Tabs -->
+<div class="bg-white rounded-lg shadow-md">
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+            <button onclick="showTab('nutrition')" 
+                    class="tab-button active py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    data-tab="nutrition">
+                <i class="fas fa-heartbeat mr-2"></i>
+                Nutrition Facts
+            </button>
+            <button onclick="showTab('ingredients')" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    data-tab="ingredients">
+                <i class="fas fa-list mr-2"></i>
+                Ingredients
+            </button>
+            <button onclick="showTab('allergens')" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    data-tab="allergens">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Allergens
+            </button>
+            <button onclick="showTab('sustainability')" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    data-tab="sustainability">
+                <i class="fas fa-leaf mr-2"></i>
+                Sustainability
+            </button>
+            <button onclick="showTab('recommendations')" 
+                    class="tab-button py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-colors"
+                    data-tab="recommendations">
+                <i class="fas fa-star mr-2"></i>
+                Recommendations
+            </button>
+        </nav>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="p-6">
+        <!-- Nutrition Facts Tab -->
+        <div id="nutrition-tab" class="tab-content">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-primary-600 mr-2"></i>
+                        Nutritional Values (per 100g)
+                    </h3>
+                    <div class="space-y-3">
+                        {% if product.energy_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Energy:</span>
+                                <span class="text-gray-900">{{ product.energy_100g }} kJ ({{ product.energy_kcal_100g or 'N/A' }} kcal)</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.fat_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Fat:</span>
+                                <span class="text-gray-900">{{ product.fat_100g }}g</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.saturated_fat_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Saturated Fat:</span>
+                                <span class="text-gray-900">{{ product.saturated_fat_100g }}g</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.carbohydrates_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Carbohydrates:</span>
+                                <span class="text-gray-900">{{ product.carbohydrates_100g }}g</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.sugars_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Sugars:</span>
+                                <span class="text-gray-900">{{ product.sugars_100g }}g</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.fiber_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Fiber:</span>
+                                <span class="text-gray-900">{{ product.fiber_100g }}g</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.proteins_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Protein:</span>
+                                <span class="text-gray-900">{{ product.proteins_100g }}g</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.salt_100g %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <span class="font-medium text-gray-700">Salt:</span>
+                                <span class="text-gray-900">{{ product.salt_100g }}g</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-primary-600 mr-2"></i>
+                        Additional Information
+                    </h3>
+                    <div class="space-y-4">
+                        {% if product.serving_size %}
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i class="fas fa-utensils text-blue-600"></i>
+                                    <span class="font-medium text-blue-900">Serving Size</span>
+                                </div>
+                                <p class="text-blue-800">{{ product.serving_size }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.categories %}
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i class="fas fa-tags text-green-600"></i>
+                                    <span class="font-medium text-green-900">Categories</span>
+                                </div>
+                                <p class="text-green-800">{{ product.categories }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingredients Tab -->
+        <div id="ingredients-tab" class="tab-content hidden">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-list text-primary-600 mr-2"></i>
+                Ingredients
+            </h3>
+            {% if product.ingredients_text %}
+                <div class="bg-gray-50 p-6 rounded-lg">
+                    <p class="text-gray-800 leading-relaxed">{{ product.ingredients_text }}</p>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-500">No ingredient information available for this product.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Allergens Tab -->
+        <div id="allergens-tab" class="tab-content hidden">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle text-warning-600 mr-2"></i>
+                Allergen Information
+            </h3>
+            {% if product.allergens %}
+                <div class="bg-red-50 border border-red-200 p-6 rounded-lg">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl mt-1"></i>
+                        <div>
+                            <h4 class="font-bold text-red-900 mb-2">Contains Allergens:</h4>
+                            <p class="text-red-800">{{ product.allergens }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-green-400 text-4xl mb-4"></i>
+                    <p class="text-gray-500">No allergen information available for this product.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sustainability Tab -->
+        <div id="sustainability-tab" class="tab-content hidden">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-leaf text-success-600 mr-2"></i>
+                Sustainability Information
+            </h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                {% if product.ecoscore_grade %}
+                    <div class="bg-green-50 p-6 rounded-lg">
+                        <h4 class="font-bold text-green-900 mb-3">Environmental Impact</h4>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm font-medium text-green-700">Eco-Score:</span>
+                            <span class="inline-flex items-center justify-center w-8 h-8 text-white font-bold rounded-full
+                                {% if product.ecoscore_grade.lower() == 'a' %}bg-green-500
+                                {% elif product.ecoscore_grade.lower() == 'b' %}bg-lime-500
+                                {% elif product.ecoscore_grade.lower() == 'c' %}bg-yellow-500
+                                {% elif product.ecoscore_grade.lower() == 'd' %}bg-orange-500
+                                {% else %}bg-red-500{% endif %}">
+                                {{ product.ecoscore_grade }}
+                            </span>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if product.packaging %}
+                    <div class="bg-blue-50 p-6 rounded-lg">
+                        <h4 class="font-bold text-blue-900 mb-3">Packaging</h4>
+                        <p class="text-blue-800">{{ product.packaging }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recommendations Tab -->
+        <div id="recommendations-tab" class="tab-content hidden">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-star text-primary-600 mr-2"></i>
+                Similar Products
+            </h3>
+            <div id="recommendations-content">
+                <div class="text-center py-8">
+                    <button onclick="getRecommendations('{{ product.code }}')" 
+                            class="inline-flex items-center px-6 py-3 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-magic mr-2"></i>
+                        Load Recommendations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Tab functionality
+function showTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => content.classList.add('hidden'));
+    
+    // Remove active class from all tab buttons
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.classList.remove('active', 'border-primary-600', 'text-primary-600');
+        button.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    
+    // Add active class to clicked tab button
+    const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
+    activeButton.classList.add('active', 'border-primary-600', 'text-primary-600');
+    activeButton.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+}
+
+// Get recommendations
+function getRecommendations(productCode) {
+    const contentDiv = document.getElementById('recommendations-content');
+    contentDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-primary-600"></i><p class="text-gray-600 mt-2">Loading recommendations...</p></div>';
+    
+    fetch(`/api/recommendations/${productCode}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.recommendations && data.recommendations.length > 0) {
+                let html = '<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">';
+                data.recommendations.forEach(product => {
+                    html += `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h4 class="font-bold text-gray-900 mb-2">${product.product_name}</h4>
+                            <p class="text-gray-600 text-sm mb-3">${product.brands || 'Unknown brand'}</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-500">Similarity: ${(product.similarity * 100).toFixed(1)}%</span>
+                                <a href="/product/${product.code}" class="text-primary-600 hover:text-primary-800 text-sm font-medium">View Details</a>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                contentDiv.innerHTML = html;
+            } else {
+                contentDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-exclamation-circle text-gray-400 text-4xl mb-4"></i><p class="text-gray-500">No recommendations available for this product.</p></div>';
+            }
+        })
+        .catch(error => {
+            contentDiv.innerHTML = '<div class="text-center py-8"><i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i><p class="text-red-500">Error loading recommendations. Please try again.</p></div>';
+        });
+}
+
+// Add to comparison
+function addToComparison(productCode, productName) {
+    // This would typically save to localStorage or send to backend
+    alert(`${productName} added to comparison!`);
+}
+
+// Share product
+function shareProduct() {
+    if (navigator.share) {
+        navigator.share({
+            title: document.title,
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert('Product link copied to clipboard!');
+        });
+    }
+}
+
+// Initialize first tab as active
+document.addEventListener('DOMContentLoaded', function() {
+    showTab('nutrition');
+});
+</script>
+{% endblock %}
