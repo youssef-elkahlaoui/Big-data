@@ -65,7 +65,6 @@ Recommender System{% endblock %} {% block content %}
       Find products that match your environmental values
     </p>
   </div>
-
   <form
     id="sustainabilityFilters"
     onsubmit="loadSustainabilityData(event)"
@@ -206,7 +205,6 @@ Recommender System{% endblock %} {% block content %}
         </select>
       </div>
     </div>
-
     <div class="text-center">
       <button
         type="submit"
@@ -591,12 +589,17 @@ Recommender System{% endblock %} {% block content %}
 {% endblock %} {% block scripts %}
 <script>
   function loadSustainabilityData(event) {
+    console.log("🚀 Form submitted! loadSustainabilityData called");
     event.preventDefault();
+    console.log("✅ Default form submission prevented");
 
     const form = document.getElementById("sustainabilityFilters");
     const formData = new FormData(form);
     const resultsSection = document.getElementById("sustainability-results");
-    const resultsContent = document.getElementById("results-content"); // Show loading state    resultsSection.classList.remove("hidden");
+    const resultsContent = document.getElementById("results-content");
+
+    // Show loading state
+    resultsSection.classList.remove("hidden");
     resultsContent.innerHTML = `
         <div class="text-center py-8">
             <i class="fas fa-spinner fa-spin text-3xl text-success-600 mb-4"></i>
@@ -643,7 +646,9 @@ Recommender System{% endblock %} {% block content %}
       submitButton.disabled = true;
       submitButton.innerHTML =
         '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
-    } // Prepare filter data
+    }
+
+    // Prepare filter data
     const filters = {
       eco_score_min: formData.get("eco_score_min") || "",
       packaging_preference: formData.get("packaging_preference") || "",
@@ -668,7 +673,25 @@ Recommender System{% endblock %} {% block content %}
       })
       .then((data) => {
         console.log("Sustainability API Response:", data);
-        displaySustainabilityResults(data.products);
+        console.log(
+          "Number of products received:",
+          data.products ? data.products.length : 0
+        );
+        console.log("Products array:", data.products);
+
+        if (data.products && Array.isArray(data.products)) {
+          displaySustainabilityResults(data.products);
+        } else {
+          console.error("Invalid products data structure:", data);
+          resultsContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-500 mb-2"></i>
+                <p class="text-red-600">Invalid data structure received from server</p>
+                <p class="text-gray-500 text-sm mt-1">Expected products array, got: ${typeof data.products}</p>
+            </div>
+          `;
+        }
+
         // Reset button state
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) {
@@ -695,11 +718,21 @@ Recommender System{% endblock %} {% block content %}
         }
       });
   }
-
   function displaySustainabilityResults(products) {
+    console.log("=== displaySustainabilityResults called ===");
+    console.log("Products parameter:", products);
+    console.log("Products type:", typeof products);
+    console.log("Products is array:", Array.isArray(products));
+
     const resultsContent = document.getElementById("results-content");
 
+    if (!resultsContent) {
+      console.error("Results content element not found!");
+      return;
+    }
+
     if (!products || products.length === 0) {
+      console.log("No products to display");
       resultsContent.innerHTML = `
             <div class="text-center py-8">
                 <i class="fas fa-search text-3xl text-gray-400 mb-4"></i>
@@ -709,6 +742,8 @@ Recommender System{% endblock %} {% block content %}
         `;
       return;
     }
+
+    console.log(`Rendering ${products.length} products`);
 
     let html = `
         <div class="mb-4">
@@ -720,20 +755,38 @@ Recommender System{% endblock %} {% block content %}
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
     `;
-
     products.forEach((product) => {
       const ecoScore = product.eco_score || "Unknown";
       const sustainabilityScore = product.sustainability_score || 0;
-      const scoreColor =
-        ecoScore === "A"
-          ? "green"
-          : ecoScore === "B"
-          ? "lime"
-          : ecoScore === "C"
-          ? "yellow"
-          : ecoScore === "D"
-          ? "orange"
-          : "red";
+
+      // Use specific color classes that Tailwind can compile
+      let scoreColorClass = "";
+      let scoreTextClass = "";
+      switch (ecoScore.toUpperCase()) {
+        case "A":
+          scoreColorClass = "bg-green-500";
+          scoreTextClass = "text-green-600";
+          break;
+        case "B":
+          scoreColorClass = "bg-lime-500";
+          scoreTextClass = "text-lime-600";
+          break;
+        case "C":
+          scoreColorClass = "bg-yellow-500";
+          scoreTextClass = "text-yellow-600";
+          break;
+        case "D":
+          scoreColorClass = "bg-orange-500";
+          scoreTextClass = "text-orange-600";
+          break;
+        case "E":
+          scoreColorClass = "bg-red-500";
+          scoreTextClass = "text-red-600";
+          break;
+        default:
+          scoreColorClass = "bg-gray-500";
+          scoreTextClass = "text-gray-600";
+      }
 
       const isOrganic = product.is_organic
         ? '<i class="fas fa-leaf text-green-500 mr-1"></i>'
@@ -748,7 +801,7 @@ Recommender System{% endblock %} {% block content %}
                     <h3 class="font-bold text-gray-900 text-sm leading-tight">
                         ${product.product_name || "Unknown Product"}
                     </h3>
-                    <span class="inline-flex items-center justify-center w-8 h-8 bg-${scoreColor}-500 text-white font-bold rounded-full text-sm ml-2">
+                    <span class="inline-flex items-center justify-center w-8 h-8 ${scoreColorClass} text-white font-bold rounded-full text-sm ml-2">
                         ${ecoScore}
                     </span>
                 </div>
@@ -763,6 +816,7 @@ Recommender System{% endblock %} {% block content %}
                     ${
                       product.categories
                         ? `
+
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-tags text-orange-600"></i>
                         <span class="text-gray-700 text-xs">${product.categories.substring(
@@ -777,6 +831,7 @@ Recommender System{% endblock %} {% block content %}
                     ${
                       product.countries
                         ? `
+
                     <div class="flex items-center space-x-2">
                         <i class="fas fa-globe text-purple-600"></i>
                         <span class="text-gray-700 text-xs">${product.countries.substring(
@@ -787,13 +842,12 @@ Recommender System{% endblock %} {% block content %}
                     `
                         : ""
                     }
-                    
-                    <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                      <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                         <div class="flex items-center space-x-1">
                             ${isOrganic}${isLocal}
                             <span class="text-gray-600 text-xs">Sustainability Score:</span>
                         </div>
-                        <span class="font-bold text-${scoreColor}-600">${sustainabilityScore}/100</span>
+                        <span class="font-bold ${scoreTextClass}">${sustainabilityScore}/100</span>
                     </div>
                     
                     <div class="mt-2">
@@ -808,14 +862,20 @@ Recommender System{% endblock %} {% block content %}
             </div>
         `;
     });
-
     html += "</div>";
+
+    console.log("Final HTML to be inserted:", html.substring(0, 500) + "...");
     resultsContent.innerHTML = html;
+    console.log("HTML inserted into results content");
 
     // Add event listeners for the new product detail buttons
-    document.querySelectorAll(".product-details-btn").forEach((button) => {
+    const detailButtons = document.querySelectorAll(".product-details-btn");
+    console.log(`Found ${detailButtons.length} detail buttons`);
+
+    detailButtons.forEach((button) => {
       button.addEventListener("click", function () {
         const productCode = this.getAttribute("data-product-code");
+        console.log("Detail button clicked for product:", productCode);
         if (productCode) {
           showProductDetails(productCode);
         }
@@ -1007,15 +1067,40 @@ Recommender System{% endblock %} {% block content %}
       product.ingredients_text || "No ingredient information available";
     document.getElementById("productIngredients").textContent = ingredients;
   }
-
   function closeProductModal() {
     const modal = document.getElementById("productModal");
     modal.classList.add("hidden");
-  }
-
-  // Initialize tooltips or other interactive elements
+  } // Initialize tooltips or other interactive elements
   document.addEventListener("DOMContentLoaded", function () {
-    // Add any initialization code here
+    console.log("=== Sustainability page loaded ===");
+    console.log("Current URL:", window.location.href);
+    console.log("Document title:", document.title);
+
+    // Check if form exists
+    const form = document.getElementById("sustainabilityFilters");
+    if (form) {
+      console.log("✅ Form found:", form);
+    } else {
+      console.error("❌ Form not found!");
+    }
+
+    // Check if results containers exist
+    const resultsSection = document.getElementById("sustainability-results");
+    const resultsContent = document.getElementById("results-content");
+
+    if (resultsSection) {
+      console.log("✅ Results section found");
+    } else {
+      console.error("❌ Results section not found!");
+    }
+
+    if (resultsContent) {
+      console.log("✅ Results content found");
+    } else {
+      console.error("❌ Results content not found!");
+    }
+
+    console.log("=== Initialization complete ===");
   });
 </script>
 {% endblock %}
