@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+ {% extends "base.html" %}
 
 {% block title %}Recipe Recommendations - Food Recommender{% endblock %}
 
@@ -43,27 +43,58 @@
                               placeholder="Describe your recipe (e.g., 'Italian pasta dish with fresh tomatoes and herbs')"
                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none">{{ request.form.get('recipe_description', '') }}</textarea>
                 </div>
-            </div>
-
-            <!-- Location and Preferences -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Country -->
+            </div>            <!-- Location and Preferences -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">                <!-- Country -->
                 <div>
                     <label for="country" class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-globe mr-2"></i>Country/Region
+                        <i class="fas fa-globe mr-2"></i>Available in Country
                     </label>
                     <select name="country" id="country" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none" required>
-                        <option value="">Select Country</option>
-                        <option value="france" {{ 'selected' if request.form.get('country') == 'france' }}>France</option>
-                        <option value="united-states" {{ 'selected' if request.form.get('country') == 'united-states' }}>United States</option>
-                        <option value="germany" {{ 'selected' if request.form.get('country') == 'germany' }}>Germany</option>
-                        <option value="italy" {{ 'selected' if request.form.get('country') == 'italy' }}>Italy</option>
-                        <option value="spain" {{ 'selected' if request.form.get('country') == 'spain' }}>Spain</option>
-                        <option value="united-kingdom" {{ 'selected' if request.form.get('country') == 'united-kingdom' }}>United Kingdom</option>
-                        <option value="canada" {{ 'selected' if request.form.get('country') == 'canada' }}>Canada</option>
-                        <option value="australia" {{ 'selected' if request.form.get('country') == 'australia' }}>Australia</option>
-                        <option value="belgium" {{ 'selected' if request.form.get('country') == 'belgium' }}>Belgium</option>
-                        <option value="netherlands" {{ 'selected' if request.form.get('country') == 'netherlands' }}>Netherlands</option>
+                        <option value="">Any Country</option>
+                        <option value="en:france" {{ 'selected' if request.form.get('country') == 'en:france' }}>France</option>
+                        <option value="en:united-states" {{ 'selected' if request.form.get('country') == 'en:united-states' }}>United States</option>
+                        <option value="en:spain" {{ 'selected' if request.form.get('country') == 'en:spain' }}>Spain</option>
+                        <option value="en:germany" {{ 'selected' if request.form.get('country') == 'en:germany' }}>Germany</option>
+                        <option value="en:world" {{ 'selected' if request.form.get('country') == 'en:world' }}>World</option>
+                        <option value="en:belgium" {{ 'selected' if request.form.get('country') == 'en:belgium' }}>Belgium</option>
+                        <option value="en:switzerland" {{ 'selected' if request.form.get('country') == 'en:switzerland' }}>Switzerland</option>
+                        <option value="en:italy" {{ 'selected' if request.form.get('country') == 'en:italy' }}>Italy</option>
+                        <option value="en:united-kingdom" {{ 'selected' if request.form.get('country') == 'en:united-kingdom' }}>United Kingdom</option>
+                        <option value="en:morocco" {{ 'selected' if request.form.get('country') == 'en:morocco' }}>Morocco</option>
+                        <option value="en:netherlands" {{ 'selected' if request.form.get('country') == 'en:netherlands' }}>Netherlands</option>
+                        <option value="en:austria" {{ 'selected' if request.form.get('country') == 'en:austria' }}>Austria</option>
+                        <option value="en:portugal" {{ 'selected' if request.form.get('country') == 'en:portugal' }}>Portugal</option>
+                        <option value="en:canada" {{ 'selected' if request.form.get('country') == 'en:canada' }}>Canada</option>
+                        <option value="en:poland" {{ 'selected' if request.form.get('country') == 'en:poland' }}>Poland</option>
+                    </select>
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-tags mr-2"></i>Category
+                    </label>
+                    <select name="category" id="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+                        <option value="">All Categories</option>
+                        <option value="en:groceries" {{ 'selected' if request.form.get('category') == 'en:groceries' }}>Groceries</option>
+                        <option value="en:beverages" {{ 'selected' if request.form.get('category') == 'en:beverages' }}>Beverages</option>
+                        <option value="en:sweetened-beverages" {{ 'selected' if request.form.get('category') == 'en:sweetened-beverages' }}>Sweetened Beverages</option>
+                        <option value="en:snacks" {{ 'selected' if request.form.get('category') == 'en:snacks' }}>Snacks</option>
+                        <option value="en:biscuits" {{ 'selected' if request.form.get('category') == 'en:biscuits' }}>Biscuits</option>
+                        <option value="en:candies" {{ 'selected' if request.form.get('category') == 'en:candies' }}>Candies</option>
+                        <option value="en:dark-chocolates" {{ 'selected' if request.form.get('category') == 'en:dark-chocolates' }}>Dark Chocolates</option>
+                        <option value="en:frozen-foods" {{ 'selected' if request.form.get('category') == 'en:frozen-foods' }}>Frozen Foods</option>
+                        <option value="en:cheeses" {{ 'selected' if request.form.get('category') == 'en:cheeses' }}>Cheeses</option>
+                        <option value="en:breads" {{ 'selected' if request.form.get('category') == 'en:breads' }}>Breads</option>
+                        <option value="en:salads" {{ 'selected' if request.form.get('category') == 'en:salads' }}>Salads</option>
+                        <option value="en:virgin-olive-oils" {{ 'selected' if request.form.get('category') == 'en:virgin-olive-oils' }}>Virgin Olive Oils</option>
+                        <option value="en:yogurts" {{ 'selected' if request.form.get('category') == 'en:yogurts' }}>Yogurts</option>
+                        <option value="en:breakfast-cereals" {{ 'selected' if request.form.get('category') == 'en:breakfast-cereals' }}>Breakfast Cereals</option>
+                        <option value="en:plant-based-beverages" {{ 'selected' if request.form.get('category') == 'en:plant-based-beverages' }}>Plant Based Beverages</option>
+                        <option value="en:crackers-appetizers" {{ 'selected' if request.form.get('category') == 'en:crackers-appetizers' }}>Crackers Appetizers</option>
+                        <option value="en:white-hams" {{ 'selected' if request.form.get('category') == 'en:white-hams' }}>White Hams</option>
+                        <option value="en:confectioneries" {{ 'selected' if request.form.get('category') == 'en:confectioneries' }}>Confectioneries</option>
+                        <option value="en:frozen-desserts" {{ 'selected' if request.form.get('category') == 'en:frozen-desserts' }}>Frozen Desserts</option>
                     </select>
                 </div>
 
@@ -160,97 +191,72 @@
                     For recipe with: <span class="font-medium">{{ request.form.get('ingredients') }}</span>
                 </p>
             {% endif %}
-        </div>
-
-        <!-- Recommendations Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </div>        <!-- Recommendations List -->
+        <div class="space-y-4">
             {% for product in recommendations %}
                 <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex-1">                            <h3 class="text-lg font-semibold text-gray-900 mb-2">
-                                <a href="{{ url_for('product', product_code=product.code) }}" class="hover:text-primary-600 transition-colors">
-                                    {{ product.product_name or 'Unknown Product' }}
-                                </a>
-                            </h3>
-                            
-                            {% if product.brands %}
-                                <p class="text-sm text-gray-600 mb-2">
-                                    <i class="fas fa-tag mr-1"></i>{{ product.brands }}
-                                </p>
-                            {% endif %}
-                        </div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                        <a class="hover:text-primary-600 transition-colors">
+                                            {{ product.product_name or 'Unknown Product' }}
+                                        </a>
+                                    </h3>
+                                    
+                                    {% if product.brands %}
+                                        <p class="text-sm text-gray-600 mb-2">
+                                            <i class="fas fa-tag mr-1"></i>
+                                            {{ product.brands }}
+                                        </p>
+                                    {% endif %}
 
-                        <!-- Nutri-Score -->
-                        {% if product.nutriscore_grade and product.nutriscore_grade != 'unknown' %}
-                            <div class="nutriscore-badge nutriscore-{{ product.nutriscore_grade.lower() }}">
-                                {{ product.nutriscore_grade.upper() }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Relevance Scores -->
-                    <div class="mb-4 space-y-2">
-                        {% if product.get('relevance_score') %}
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600">Overall Relevance:</span>
-                                <div class="flex items-center">
-                                    <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                                        <div class="bg-primary-600 h-2 rounded-full" style="width: '{{ (product.relevance_score * 100)|round }}%'"></div>
-                                    </div>
-                                    <span class="font-medium">{{ "%.1f"|format(product.relevance_score * 100) }}%</span>
+                                    {% if product.categories %}
+                                        <p class="text-sm text-gray-500 mb-2">
+                                            <i class="fas fa-folder mr-1"></i>
+                                            {{ product.categories[:100] }}{{ '...' if product.categories|length > 100 else '' }}
+                                        </p>
+                                    {% endif %}
                                 </div>
-                            </div>
-                        {% endif %}
 
-                        {% if product.get('ingredient_match_score') %}
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-600">Ingredient Match:</span>
-                                <div class="flex items-center">
-                                    <div class="w-20 bg-gray-200 rounded-full h-2 mr-2">
-                                        <div class="bg-success-600 h-2 rounded-full" style="width: '{{ (product.ingredient_match_score * 100)|round }}%'"></div>
+                                <!-- Nutri-Score Badge -->
+                                {% if product.nutriscore_grade and product.nutriscore_grade != 'unknown' %}
+                                    <div class="nutriscore-badge nutriscore-{{ product.nutriscore_grade.lower() }} ml-4">
+                                        <span class="nutriscore-letter">{{ product.nutriscore_grade.upper() }}</span>
                                     </div>
-                                    <span class="font-medium">{{ "%.1f"|format(product.ingredient_match_score * 100) }}%</span>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Nutrition Summary -->
-                    {% if product.get('nutrition_info') %}
-                        <div class="border-t border-gray-100 pt-4 mb-4">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">Nutrition (per 100g):</h4>
-                            <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                                {% if product.nutrition_info.energy_100g %}
-                                    <div>Energy: {{ product.nutrition_info.energy_100g }}kJ</div>
-                                {% endif %}
-                                {% if product.nutrition_info.proteins_100g %}
-                                    <div>Protein: {{ product.nutrition_info.proteins_100g }}g</div>
-                                {% endif %}
-                                {% if product.nutrition_info.carbohydrates_100g %}
-                                    <div>Carbs: {{ product.nutrition_info.carbohydrates_100g }}g</div>
-                                {% endif %}
-                                {% if product.nutrition_info.fat_100g %}
-                                    <div>Fat: {{ product.nutrition_info.fat_100g }}g</div>
                                 {% endif %}
                             </div>
-                        </div>
-                    {% endif %}
 
-                    <!-- Categories -->
-                    {% if product.categories %}
-                        <div class="mb-4">
-                            <p class="text-xs text-gray-500">
-                                <i class="fas fa-folder mr-1"></i>
-                                {{ product.categories[:80] }}{{ '...' if product.categories|length > 80 else '' }}
-                            </p>
+                            <!-- Recipe-specific Additional Info -->
+                            <div class="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+                                {% if product.get('relevance_score') %}
+                                    <span class="inline-flex items-center">
+                                        <i class="fas fa-star text-yellow-500 mr-1"></i>
+                                        Relevance: {{ "%.1f"|format(product.relevance_score * 100) }}%
+                                    </span>
+                                {% endif %}
+                                {% if product.get('ingredient_match_score') %}
+                                    <span class="inline-flex items-center">
+                                        <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                                        Ingredient Match: {{ "%.1f"|format(product.ingredient_match_score * 100) }}%
+                                    </span>
+                                {% endif %}
+                                <span class="inline-flex items-center">
+                                    <i class="fas fa-barcode mr-1"></i>
+                                    {{ product.code }}
+                                </span>
+                            </div>
                         </div>
-                    {% endif %}                    <!-- Action Button -->
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500">Code: {{ product.code }}</span>
-                        <a href="{{ url_for('product', product_code=product.code) }}" 
-                           class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
-                            View Details
-                        </a>
+
+                        <!-- Action Button -->
+                        <div class="mt-4 md:mt-0 md:ml-6">
+                            <button data-product-code="{{ product.code or '' }}"
+                               class="product-details-btn bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors inline-flex items-center">
+                                <i class="fas fa-eye mr-2"></i>
+                                View Details
+                            </button>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
@@ -273,8 +279,79 @@
                     Browse All Products
                 </a>
             </div>
+        </div>    {% endif %}
+</div>
+
+<!-- Product Details Popup Modal -->
+<div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-start mb-4">
+                <h2 id="modalTitle" class="text-xl font-bold text-gray-900">Product Details</h2>
+                <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="modalLoading" class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-2xl text-primary-600 mb-2"></i>
+                <p class="text-gray-600">Loading product details...</p>
+            </div>
+            
+            <!-- Product Content -->
+            <div id="modalContent" class="hidden">
+                <!-- Product Image -->
+                <div class="mb-6 flex justify-center">
+                    <div id="productImageContainer" class="w-full max-w-xs h-48 sm:h-56">
+                        <!-- Image will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Product Name and Brand -->
+                <div class="mb-4">
+                    <h3 id="productName" class="text-lg font-semibold text-gray-900 mb-2"></h3>
+                    <p id="productBrand" class="text-gray-600"></p>
+                    <p id="productCode" class="text-sm text-gray-500 mt-1"></p>
+                </div>
+                
+                <!-- Nutriscore -->
+                <div class="mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-gray-700">Nutri-Score:</span>
+                        <div id="nutriscoreBadge" class="nutriscore-badge"></div>
+                    </div>
+                </div>
+                
+                <!-- Categories -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Categories</h4>
+                    <p id="productCategories" class="text-gray-600 text-sm"></p>
+                </div>
+                
+                <!-- Nutritional Information -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Nutrition Facts (per 100g)</h4>
+                    <div id="nutritionGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <!-- Nutrition items will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Ingredients -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Ingredients</h4>
+                    <p id="productIngredients" class="text-gray-600 text-sm leading-relaxed"></p>
+                </div>
+            </div>
+            
+            <!-- Error State -->
+            <div id="modalError" class="hidden text-center py-8">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-500 mb-2"></i>
+                <p class="text-red-600">Failed to load product details</p>
+            </div>
         </div>
-    {% endif %}
+    </div>
 </div>
 
 <style>
@@ -366,6 +443,213 @@
             button.innerHTML = originalText;
             button.disabled = false;
         }, 30000);
+    });
+
+    // Product Details Popup Functions
+    function showProductDetails(productCode) {
+        const modal = document.getElementById('productModal');
+        const loading = document.getElementById('modalLoading');
+        const content = document.getElementById('modalContent');
+        const error = document.getElementById('modalError');
+        
+        // Show modal and loading state
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        loading.classList.remove('hidden');
+        content.classList.add('hidden');
+        error.classList.add('hidden');
+        
+        // Fetch product details
+        fetch(`/api/product/${productCode}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(product => {
+                console.log('API Response received:', product); // Debug log
+                console.log('Image URL from API:', product.image_url); // Debug log
+                populateProductModal(product);
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error('Error fetching product details:', err);
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+            });
+    }
+
+    function populateProductModal(product) {
+        console.log('=== populateProductModal called ===');
+        console.log('Full product object:', product);
+        console.log('product.image_url value:', product.image_url);
+        console.log('product.image_url type:', typeof product.image_url);
+        console.log('product.image_url length:', product.image_url ? product.image_url.length : 'N/A');
+        
+        // Product image
+        const imageContainer = document.getElementById('productImageContainer');
+        
+        if (product.image_url && product.image_url.trim() !== '') {
+            console.log('✅ Image URL is valid, proceeding with loading...');
+            console.log('Loading image URL:', product.image_url); // Debug log
+            
+            // Show loading state for image
+            imageContainer.innerHTML = `
+                <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p class="text-xs">Loading image...</p>
+                    </div>
+                </div>
+            `;
+            
+            // Create image element programmatically to avoid inline event handler issues
+            const img = new Image();
+            img.className = "w-full h-full object-cover rounded-lg shadow-md";
+            img.alt = product.product_name || 'Product image';
+            
+            // Set crossOrigin to handle CORS issues
+            img.crossOrigin = "anonymous";
+            
+            img.onload = function() {
+                console.log('Image loaded successfully:', this.src);
+                imageContainer.innerHTML = '';
+                imageContainer.appendChild(this);
+            };
+            
+            img.onerror = function() {
+                console.log('Image failed to load:', this.src);
+                console.log('Attempting alternative loading method...');
+                
+                // Try loading without crossOrigin
+                const img2 = new Image();
+                img2.className = "w-full h-full object-cover rounded-lg shadow-md";
+                img2.alt = product.product_name || 'Product image';
+                
+                img2.onload = function() {
+                    console.log('Image loaded with alternative method:', this.src);
+                    imageContainer.innerHTML = '';
+                    imageContainer.appendChild(this);
+                };
+                
+                img2.onerror = function() {
+                    console.log('Alternative image loading also failed:', this.src);
+                    const urlPreview = product.image_url.length > 50 ? 
+                        product.image_url.substring(0, 50) + '...' : 
+                        product.image_url;
+                        
+                    imageContainer.innerHTML = `
+                        <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center text-gray-400">
+                                <i class="fas fa-image text-3xl mb-2"></i>
+                                <p class="text-xs">Image unavailable</p>
+                                <p class="text-xs mt-1 text-red-400">URL: ${urlPreview}</p>
+                                <button onclick="window.open('${product.image_url}', '_blank')" 
+                                        class="text-xs text-blue-500 hover:text-blue-700 mt-1 underline">
+                                    Open in new tab
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                };
+                
+                img2.src = product.image_url;
+            };
+            
+            // Start loading the image
+            img.src = product.image_url;
+        } else {
+            console.log('❌ No valid image URL found');
+            console.log('image_url value:', product.image_url);
+            imageContainer.innerHTML = `
+                <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-400">
+                        <i class="fas fa-image text-3xl mb-2"></i>
+                        <p class="text-xs">No image URL provided</p>
+                        <p class="text-xs text-red-400 mt-1">Debug: ${JSON.stringify(product.image_url)}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Product name and brand
+        document.getElementById('productName').textContent = product.product_name || 'N/A';
+        document.getElementById('productBrand').textContent = product.brands || 'N/A';
+        document.getElementById('productCode').textContent = `Product Code: ${product.code || 'N/A'}`;
+        
+        // Nutriscore
+        const nutriscoreBadge = document.getElementById('nutriscoreBadge');
+        const grade = (product.nutriscore_grade || 'unknown').toLowerCase();
+        nutriscoreBadge.textContent = grade.toUpperCase();
+        nutriscoreBadge.className = `nutriscore-badge nutriscore-${grade}`;
+        
+        // Categories
+        document.getElementById('productCategories').textContent = product.categories || 'N/A';
+        
+        // Nutrition facts
+        const nutritionGrid = document.getElementById('nutritionGrid');
+        nutritionGrid.innerHTML = '';
+        
+        const nutritionItems = [
+            { label: 'Energy', value: product.energy_100g, unit: 'kJ' },
+            { label: 'Fat', value: product.fat_100g, unit: 'g' },
+            { label: 'Carbohydrates', value: product.carbohydrates_100g, unit: 'g' },
+            { label: 'Proteins', value: product.proteins_100g, unit: 'g' },
+            { label: 'Salt', value: product.salt_100g, unit: 'g' },
+            { label: 'Sugars', value: product.sugars_100g, unit: 'g' },
+            { label: 'Fiber', value: product.fiber_100g, unit: 'g' },
+            { label: 'Sodium', value: product.sodium_100g, unit: 'g' }
+        ];
+        
+        nutritionItems.forEach(item => {
+            if (item.value !== null && item.value !== undefined) {
+                const nutritionItem = document.createElement('div');
+                nutritionItem.className = 'bg-gray-50 px-3 py-2 rounded text-center';
+                nutritionItem.innerHTML = `
+                    <div class="text-xs font-medium text-gray-700">${item.label}</div>
+                    <div class="text-sm font-semibold text-gray-900">${item.value}${item.unit}</div>
+                `;
+                nutritionGrid.appendChild(nutritionItem);
+            }
+        });
+        
+        // Ingredients
+        const ingredients = product.ingredients_text || 'No ingredient information available';
+        document.getElementById('productIngredients').textContent = ingredients;
+    }
+
+    function closeProductModal() {
+        const modal = document.getElementById('productModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('productModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeProductModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeProductModal();
+        }
+    });
+
+    // Add event listeners for product detail buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.product-details-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const productCode = this.getAttribute('data-product-code');
+                if (productCode) {
+                    showProductDetails(productCode);
+                }
+            });
+        });
     });
 </script>
 {% endblock %}
