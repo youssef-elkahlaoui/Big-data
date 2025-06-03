@@ -2,7 +2,7 @@
 
 ## 🎯 Presentation Structure & Content Guide
 
-### Slide Deck Overview (20-25 slides)
+### Slide Deck Overview (15 slides)
 
 ---
 
